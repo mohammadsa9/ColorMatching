@@ -1,7 +1,9 @@
+from re import S
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from Spectrum import *
+from MyPlot import *
 import MyMath as mm
 
 """
@@ -51,12 +53,12 @@ for i in range(1, 8):
 
 
 extract_data = pd.DataFrame(data, columns=['Rsub'])
-r_sub = extract_data.to_numpy()
-k_sub = mm.applyFunction(r_sub, find_KOVERS)
+R_sub = extract_data.to_numpy()
+k_sub = mm.applyFunction(R_sub, find_KOVERS)
 
 extract_data = pd.DataFrame(data, columns=['Rstd'])
-r_std = extract_data.to_numpy()
-k_std = mm.applyFunction(r_std, find_KOVERS)
+R_std = extract_data.to_numpy()
+k_std = mm.applyFunction(R_std, find_KOVERS)
 
 extract_data = pd.DataFrame(data, columns=['xbar'])
 xbar = extract_data.to_numpy()
@@ -71,7 +73,7 @@ viewer = Viewer(xbar, ybar, zbar)
 
 extract_data = pd.DataFrame(data, columns=['D65'])
 E_D65 = extract_data.to_numpy()
-light_source = LightSource(E_D65, viewer)
+light_source = LightSource(E_D65)
 
 """
 Getting Data is Finished
@@ -79,25 +81,25 @@ Getting Data is Finished
 
 # initial object to find K OVER S for Blue Dye
 BBB = Dye(blue_sample_num, data_size)
-BBB.setR(r_sub)
+BBB.setR(R_sub)
 BBB.setC(c)
-BBB.setSub(r_sub)
+BBB.setSub(R_sub)
 BBB.setR(R_blue)
 
 
 # initial object to find K OVER S for Red Dye
 RRR = Dye(red_sample_num, data_size)
-RRR.setR(r_sub)
+RRR.setR(R_sub)
 RRR.setC(c)
-RRR.setSub(r_sub)
+RRR.setSub(R_sub)
 RRR.setR(R_red)
 
 
 # initial object to find K OVER S for Yellow Dye
 YYY = Dye(yellow_sample_num, data_size)
-YYY.setR(r_sub)
+YYY.setR(R_sub)
 YYY.setC(c)
-YYY.setSub(r_sub)
+YYY.setSub(R_sub)
 YYY.setR(R_yellow)
 
 blue_KOVERS = BBB.getKOVERS()
@@ -115,12 +117,13 @@ KOVERS_First = mm.sum([C_First[0]*blue_KOVERS, C_First[1] *
 R_First = mm.applyFunction(KOVERS_First, find_r)
 
 
-EST = Spectrum(R_First, light_source)
-STD = Spectrum(r_std, light_source)
-RMS_First = RMS(R_First, r_std)
-DeltaE_First = delta_E(EST, STD)
+EST = Observation(light_source, viewer, R_First)
+STD = Observation(light_source, viewer, R_std)
+compare_1 = Compare(EST, STD)
+RMS_First = compare_1.RMS()
+DeltaE_First = compare_1.delta_E()
 
-Data3 = findC2(light_source, C_First, all_KOVERS, r_std, r_sub, maxRMS)
+Data3 = findC2(STD, R_sub, C_First, all_KOVERS, maxRMS)
 C_Last = Data3[0]
 all_E = Data3[1]
 num_tried = Data3[2]
@@ -128,10 +131,10 @@ num_tried = Data3[2]
 KOVERS_Last = mm.sum([C_Last[0]*blue_KOVERS, C_Last[1] *
                       red_KOVERS, C_Last[2]*yellow_KOVERS, k_sub])
 R_Last = mm.applyFunction(KOVERS_Last, find_r)
-ESTN = Spectrum(R_Last, light_source)
-
-RMS_Last = RMS(R_Last, r_std)
-DeltaE_Last = delta_E(ESTN, STD)
+ESTN = Observation(light_source, viewer, R_Last)
+compare_2 = Compare(STD, ESTN)
+RMS_Last = compare_2.RMS()
+DeltaE_Last = compare_2.delta_E()
 
 """
 
@@ -156,17 +159,24 @@ plt.show()
 # Draw R For Diffrent Methodes
 fig, axs = plt.subplots(3)
 axs[0].set_title('Method 1')
-axs[0].plot(wave_length, r_std, color='green')
-axs[0].plot(wave_length, R_First, color='red')
+p1, = axs[0].plot(wave_length, R_std, color='green', label="R STD")
+p2, = axs[0].plot(wave_length, R_First, color='red', label="R First Method")
+lines = [p1, p2]
+axs[0].legend(lines, [l.get_label() for l in lines])
 
 axs[1].set_title('Method 2')
-axs[1].plot(wave_length, r_std, color='green')
-axs[1].plot(wave_length, R_First, color='blue')
+p1, = axs[1].plot(wave_length, R_std, color='green', label="R STD")
+p2, = axs[1].plot(wave_length, R_First, color='blue', label="R Second Method")
+lines = [p1, p2]
+axs[1].legend(lines, [l.get_label() for l in lines])
 
 axs[2].set_title('All in One')
-axs[2].plot(wave_length, r_std, color='green')
-axs[2].plot(wave_length, R_First, color='red')
-axs[2].plot(wave_length, R_Last, color='blue')
+p1, = axs[2].plot(wave_length, R_std, color='green', label="R STD")
+p2, = axs[2].plot(wave_length, R_First, color='red', label="R First Method")
+p3, = axs[2].plot(wave_length, R_Last, color='blue', label="R Second Method")
+lines = [p1, p2, p3]
+plt.legend(lines, [l.get_label() for l in lines])
+
 
 plt.gcf().canvas.set_window_title('Compare شکل2-1')
 for ax in axs.flat:
@@ -176,9 +186,11 @@ fig.set_size_inches(4, 8)
 plt.show()
 
 # Draw R Better Way
-plt.plot(wave_length, r_std, color='green')
-plt.plot(wave_length, R_First, color='red')
-plt.plot(wave_length, R_Last, color='blue')
+p1, = plt.plot(wave_length, R_std, color='green', label="R STD")
+p2, = plt.plot(wave_length, R_First, color='red', label="R First Method")
+p3, = plt.plot(wave_length, R_Last, color='blue', label="R Second Method")
+lines = [p1, p2, p3]
+plt.legend(lines, [l.get_label() for l in lines])
 plt.gcf().canvas.set_window_title('Bigger Comparison شکل2-2')
 plt.xlabel('Wave Length')
 plt.ylabel('R')
