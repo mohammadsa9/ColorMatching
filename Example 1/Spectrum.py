@@ -129,6 +129,24 @@ class Compare:
         return np.array([[obj.mat1.getX()-obj.mat2.getX()], [obj.mat1.getY()-obj.mat2.getY()], [obj.mat1.getZ()-obj.mat2.getZ()]])
 
 
+class Mixture:
+    def __init__(object, r_sub):
+        object.r_sub = r_sub
+        object.result = mm.applyFunction(r_sub, find_KOVERS)
+
+    def add(obj, c, KOVERS):
+        obj.result = mm.sum([obj.result, c*KOVERS])
+
+    def getKOVERS(obj):
+        return obj.result
+
+    def getR(obj):
+        return mm.applyFunction(obj.result, find_r)
+
+    def clear(obj):
+        obj.result = mm.applyFunction(obj.r_sub, find_KOVERS)
+
+
 def findC1(all_KOVERS, delta_KOVERS):
     temp = mm.dot([all_KOVERS.transpose(), all_KOVERS])
     temp = mm.reverse(temp)
@@ -147,13 +165,13 @@ def findC2(STD, r_sub, C_First, all_KOVERS, maxRMS):
     yellow_KOVERS = np.array([all_KOVERS.T[2]]).T
 
     k_std = mm.applyFunction(r_std, find_KOVERS)
-    k_sub = mm.applyFunction(r_sub, find_KOVERS)
 
-    KOVERS_First = mm.sum([C_First[0]*blue_KOVERS, C_First[1] *
-                           red_KOVERS, C_First[2]*yellow_KOVERS, k_sub])
-    R_First = mm.applyFunction(KOVERS_First, find_r)
-    k_est = np.vectorize(find_KOVERS)(R_First)
-
+    Mix = Mixture(r_sub)
+    Mix.add(C_First[0], blue_KOVERS)
+    Mix.add(C_First[1], red_KOVERS)
+    Mix.add(C_First[2], yellow_KOVERS)
+    k_est = Mix.getKOVERS()
+    R_First = Mix.getR()
     alpha1 = np.subtract(r_std, R_First)
     alpha2 = np.subtract(k_std, k_est)
     D = np.diagflat(alpha1/alpha2)
@@ -176,18 +194,21 @@ def findC2(STD, r_sub, C_First, all_KOVERS, maxRMS):
         TEDPI = mm.dot([T, E_Diag, D, pi])
         delta_c = mm.dot([mm.reverse(TEDPI), delta_t])
         CC = np.add(CC, delta_c)
-        k_new = mm.sum([CC[0]*blue_KOVERS, CC[1] *
-                        red_KOVERS, CC[2] * yellow_KOVERS, k_sub])
-        r_new = mm.applyFunction(k_new, find_r)
+        Mix.clear()
+        Mix.add(CC[0], blue_KOVERS)
+        Mix.add(CC[1], red_KOVERS)
+        Mix.add(CC[2], yellow_KOVERS)
+        k_new = Mix.getKOVERS()
+        r_new = Mix.getR()
         ESTN = Observation(light_source, viewer, r_new)
     return [CC, all_E, i]
 
 
+"""
+
 def find_delta_t(r1, r2):
     return np.array([[r1.getX()-r2.getX()], [r1.getY()-r2.getY()], [r1.getZ()-r2.getZ()]])
 
-
-"""
 
 def delta_E(obj1, obj2):
     temp = pow(obj1.getL()-obj2.getL(), 2) + pow(obj1.getA() -

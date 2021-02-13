@@ -1,7 +1,8 @@
-from re import S
+#from re import S
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+# My Libraries
 from Spectrum import *
 from MyPlot import *
 import MyMath as mm
@@ -24,7 +25,10 @@ precise = 6
 Creating Wave lengths array for plots
 Creating Example Data for checking plots
 """
+# [400, 410, 420, ..., 700]
 wave_length = mm.array_distance(400, distance, 700)
+
+# [1, 1, 1, ..., 1]
 example_data = mm.array_repeat(1, data_size)
 
 """
@@ -81,26 +85,23 @@ Getting Data is Finished
 
 # initial object to find K OVER S for Blue Dye
 BBB = Dye(blue_sample_num, data_size)
-BBB.setR(R_sub)
+BBB.setR(R_blue)
 BBB.setC(c)
 BBB.setSub(R_sub)
-BBB.setR(R_blue)
 
 
 # initial object to find K OVER S for Red Dye
 RRR = Dye(red_sample_num, data_size)
-RRR.setR(R_sub)
+RRR.setR(R_red)
 RRR.setC(c)
 RRR.setSub(R_sub)
-RRR.setR(R_red)
 
 
 # initial object to find K OVER S for Yellow Dye
 YYY = Dye(yellow_sample_num, data_size)
-YYY.setR(R_sub)
+YYY.setR(R_yellow)
 YYY.setC(c)
 YYY.setSub(R_sub)
-YYY.setR(R_yellow)
 
 blue_KOVERS = BBB.getKOVERS()
 red_KOVERS = RRR.getKOVERS()
@@ -111,11 +112,17 @@ all_KOVERS = np.hstack((blue_KOVERS, red_KOVERS, yellow_KOVERS))
 delta_KOVERS = mm.sum([k_std, -1*k_sub])
 C_First = findC1(all_KOVERS, delta_KOVERS)
 
-
+"""
 KOVERS_First = mm.sum([C_First[0]*blue_KOVERS, C_First[1] *
                        red_KOVERS, C_First[2]*yellow_KOVERS, k_sub])
 R_First = mm.applyFunction(KOVERS_First, find_r)
-
+"""
+First = Mixture(R_sub)
+First.add(C_First[0], blue_KOVERS)
+First.add(C_First[1], red_KOVERS)
+First.add(C_First[2], yellow_KOVERS)
+KOVERS_First = First.getKOVERS()
+R_First = First.getR()
 
 EST = Observation(light_source, viewer, R_First)
 STD = Observation(light_source, viewer, R_std)
@@ -128,9 +135,18 @@ C_Last = Data3[0]
 all_E = Data3[1]
 num_tried = Data3[2]
 
+"""
 KOVERS_Last = mm.sum([C_Last[0]*blue_KOVERS, C_Last[1] *
                       red_KOVERS, C_Last[2]*yellow_KOVERS, k_sub])
 R_Last = mm.applyFunction(KOVERS_Last, find_r)
+"""
+Last = Mixture(R_sub)
+Last.add(C_Last[0], blue_KOVERS)
+Last.add(C_Last[1], red_KOVERS)
+Last.add(C_Last[2], yellow_KOVERS)
+KOVERS_Last = Last.getKOVERS()
+R_Last = Last.getR()
+
 ESTN = Observation(light_source, viewer, R_Last)
 compare_2 = Compare(STD, ESTN)
 RMS_Last = compare_2.RMS()
