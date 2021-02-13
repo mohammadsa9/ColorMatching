@@ -1,4 +1,3 @@
-#from re import S
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -41,17 +40,17 @@ c = extract_data.to_numpy()
 c = mm.cleanNaN(c)
 
 R_red = []
-for i in range(1, 8):
+for i in range(1, red_sample_num+1):
     extract_data = pd.DataFrame(data, columns=['r'+str(i)])
     R_red.append(extract_data.to_numpy())
 
 R_yellow = []
-for i in range(1, 8):
+for i in range(1, yellow_sample_num+1):
     extract_data = pd.DataFrame(data, columns=['y'+str(i)])
     R_yellow.append(extract_data.to_numpy())
 
 R_blue = []
-for i in range(1, 8):
+for i in range(1, blue_sample_num+1):
     extract_data = pd.DataFrame(data, columns=['b'+str(i)])
     R_blue.append(extract_data.to_numpy())
 
@@ -112,11 +111,7 @@ all_KOVERS = np.hstack((blue_KOVERS, red_KOVERS, yellow_KOVERS))
 delta_KOVERS = mm.sum([k_std, -1*k_sub])
 C_First = findC1(all_KOVERS, delta_KOVERS)
 
-"""
-KOVERS_First = mm.sum([C_First[0]*blue_KOVERS, C_First[1] *
-                       red_KOVERS, C_First[2]*yellow_KOVERS, k_sub])
-R_First = mm.applyFunction(KOVERS_First, find_r)
-"""
+
 First = Mixture(R_sub)
 First.add(C_First[0], blue_KOVERS)
 First.add(C_First[1], red_KOVERS)
@@ -135,11 +130,7 @@ C_Last = Data3[0]
 all_E = Data3[1]
 num_tried = Data3[2]
 
-"""
-KOVERS_Last = mm.sum([C_Last[0]*blue_KOVERS, C_Last[1] *
-                      red_KOVERS, C_Last[2]*yellow_KOVERS, k_sub])
-R_Last = mm.applyFunction(KOVERS_Last, find_r)
-"""
+
 Last = Mixture(R_sub)
 Last.add(C_Last[0], blue_KOVERS)
 Last.add(C_Last[1], red_KOVERS)
@@ -214,7 +205,7 @@ plt.gcf().set_size_inches(8, 8)
 plt.show()
 
 # Draw Delta E in Loop
-plt.plot(mm.array_distance(1, 1, 81), all_E, color='red')
+plt.plot(mm.array_distance(1, 1, num_tried), all_E, color='red')
 plt.gcf().canvas.set_window_title('Delta E شکل3')
 plt.xlabel('Number of tries')
 plt.ylabel('Δ E')
@@ -237,7 +228,7 @@ rects2 = ax.bar(ind + width/2, m2_means, width, yerr=m2_std,
 
 # Add some text for labels, title and custom x-axis tick labels, etc.
 # ax.set_ylabel('Scores')
-#ax.set_title('Scores by STH')
+# ax.set_title('Scores by STH')
 ax.set_xticks(ind)
 ax.set_xticklabels(('RMS', 'Δ E', "C Blue", "C Red", "C Yellow"))
 ax.legend()
@@ -247,6 +238,3 @@ autolabel(rects2, ax, "center", precise)
 plt.gcf().set_size_inches(10, 10)
 plt.gcf().canvas.set_window_title('جدول 1')
 plt.show()
-
-#print("C Blue:", C_First[0], "C Red", C_First[1], "C Yellow", C_First[2])
-# print(C_Last)

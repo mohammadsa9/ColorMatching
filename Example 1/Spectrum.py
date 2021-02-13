@@ -10,6 +10,10 @@ def find_r(k_on_s):
     return (1 + k_on_s) - pow((pow(k_on_s, 2) + 2*k_on_s), 0.5)
 
 
+def dif(r):
+    return (-2*pow(r, 2))/(1-pow(r, 2))
+
+
 class Dye:
 
     def __init__(object, sample_num, size):
@@ -172,9 +176,13 @@ def findC2(STD, r_sub, C_First, all_KOVERS, maxRMS):
     Mix.add(C_First[2], yellow_KOVERS)
     k_est = Mix.getKOVERS()
     R_First = Mix.getR()
+    """
     alpha1 = np.subtract(r_std, R_First)
     alpha2 = np.subtract(k_std, k_est)
     D = np.diagflat(alpha1/alpha2)
+    """
+    D = mm.applyFunction(r_std, dif)
+    D = np.diagflat(D)
     CC = np.array([C_First[0], C_First[1], C_First[2]])
     pi = all_KOVERS
     T = np.hstack((viewer.xbar, viewer.ybar,
