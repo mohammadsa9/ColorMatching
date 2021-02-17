@@ -16,6 +16,8 @@ end_wave = 700
 distance = 10
 data_size = int((end_wave - start_wave)/distance)+1
 munsell_size = 1269
+munsell_size2 = 32
+precise = 6
 """
 Creating Wave lengths array for plots
 Creating Example Data for checking plots
@@ -70,6 +72,7 @@ for i in range(munsell_size):
     temp_arr = [temp.getX(), temp.getY(), temp.getZ()]
     munsell_XYZ.append(temp_arr)
 
+
 # Draw Munsell Data for a better sense
 for i in range(munsell_size):
     plt.plot(wave_length, munsell_R[i])
@@ -79,7 +82,7 @@ plt.ylabel('R')
 plt.gcf().set_size_inches(8, 8)
 plt.show()
 
-
+# Part 1 - Interpolating R from XYZ
 # Delaunay Calculation
 points = np.array(munsell_XYZ)
 calc = MyDelaunay(points)
@@ -107,4 +110,42 @@ for i in range(14):
     plt.gcf().set_size_inches(8, 8)
     plt.ylim([0, 2])
     plt.text(400, 1.5, r''+text)
+    plt.show()
+
+# Part 2 - Interpolating XYZ from R
+munsell_R = munsell_R[0:munsell_size2]
+points = np.array(munsell_R)
+calc = MyDelaunay(points)
+
+for i in range(14):
+    OBS = Observation(light_source, viewer, samples[i])
+    XYZ_calc, check = revInterploration(calc, OBS, munsell_XYZ)
+    gamut = 'in-gamut data'
+    if check == False:
+        gamut = 'out-of-gamut data'
+    # Show Result
+    m1_means, m1_std = (OBS.getX(), OBS.getY(), OBS.getZ()), (0, 0, 0)
+    m2_means, m2_std = (XYZ_calc[0], XYZ_calc[1],
+                        XYZ_calc[2]), (0, 0, 0)
+
+    ind = np.arange(len(m1_means))  # the x locations for the groups
+    width = 0.35  # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(ind - width/2, m1_means, width, yerr=m1_std,
+                    label='STD')
+    rects2 = ax.bar(ind + width/2, m2_means, width, yerr=m2_std,
+                    label='Interpolation')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel(gamut)
+    # ax.set_title('Scores by STH')
+    ax.set_xticks(ind)
+    ax.set_xticklabels(('X', 'Y', "Z"))
+    ax.legend()
+    fig.tight_layout()
+    autolabel(rects1, ax, "center", precise)
+    autolabel(rects2, ax, "center", precise)
+    plt.gcf().set_size_inches(10, 10)
+    plt.gcf().canvas.set_window_title('Sample '+str(i+1))
     plt.show()

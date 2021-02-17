@@ -24,6 +24,29 @@ class LightSource:
         object.E = E
 
 
+class CIE:
+    def __init__(obj):
+        obj.X, obj.Y, obj.Z
+
+    def getX(obj):
+        return obj.X
+
+    def getY(obj):
+        return obj.Y
+
+    def getZ(obj):
+        return obj.Z
+
+    def setX(obj, x):
+        obj.X = x
+
+    def setY(obj, y):
+        obj.Y = y
+
+    def setZ(obj, z):
+        obj.Z = z
+
+
 class Observation:
     def __init__(object, LightSource, Viewer, R=1):
         object.LightSource = LightSource
@@ -68,13 +91,20 @@ class Observation:
         return z
 
     def getL(object):
-        return 116 * pow(object.getY()/object.light.getY(), 1/3) - 16
+        return 116 * object.f(object.getY()/object.light.getY()) - 16
 
     def getA(object):
-        return 500 * (pow(object.getX()/object.light.getX(), 1/3) - pow(object.getY()/object.light.getY(), 1/3))
+        return 500 * (object.f(object.getX()/object.light.getX()) - object.f(object.getY()/object.light.getY()))
 
     def getB(object):
-        return 200 * (pow(object.getY()/object.light.getY(), 1/3) - pow(object.getZ()/object.light.getZ(), 1/3))
+        return 200 * (object.f(object.getY()/object.light.getY()) - object.f(object.getZ()/object.light.getZ()))
+
+    def f(obj, t):
+        sigma = 6/29
+        if t > pow(sigma, 3):
+            return pow(t, 1/3)
+        else:
+            return (t/(3*pow(sigma, 2))) + (4/29)
 
 
 class Compare:
@@ -141,3 +171,26 @@ def Interploration(calc, OBS, munsell_R):
     R_calc = R_calc.T
 
     return R_calc, checker
+
+
+def revInterploration(calc, OBS, munsell_XYZ):
+    light_source = OBS.LightSource
+    viewer = OBS.Viewer
+    R_sample = OBS.R
+
+    sample = Observation(light_source, viewer, R_sample)
+    #sample_XYZ = [sample.getX(), sample.getY(), sample.getZ()]
+
+    R_s = R_sample.T[0]
+    checker = calc.possible(R_s)
+
+    A = calc.locate(R_s).T
+    one = mm.array_repeat(1, 32)
+    A = np.vstack((A, one))
+
+    R_s = np.hstack((R_s, [1]))
+    B = np.array([R_s]).T
+
+    Variables = mm.inv(A).dot(B)
+    XYZ_calc = Variables.T.dot(calc.getSource(munsell_XYZ))
+    return XYZ_calc[0], checker

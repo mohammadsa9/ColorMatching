@@ -59,7 +59,6 @@ class LightSource:
 
 
 class Observation:
-
     def __init__(object, LightSource, Viewer, R=1):
         object.LightSource = LightSource
         object.Viewer = Viewer
@@ -103,13 +102,20 @@ class Observation:
         return z
 
     def getL(object):
-        return 116 * pow(object.getY()/object.light.getY(), 1/3) - 16
+        return 116 * object.f(object.getY()/object.light.getY()) - 16
 
     def getA(object):
-        return 500 * (pow(object.getX()/object.light.getX(), 1/3) - pow(object.getY()/object.light.getY(), 1/3))
+        return 500 * (object.f(object.getX()/object.light.getX()) - object.f(object.getY()/object.light.getY()))
 
     def getB(object):
-        return 200 * (pow(object.getY()/object.light.getY(), 1/3) - pow(object.getZ()/object.light.getZ(), 1/3))
+        return 200 * (object.f(object.getY()/object.light.getY()) - object.f(object.getZ()/object.light.getZ()))
+
+    def f(obj, t):
+        sigma = 6/29
+        if t > pow(sigma, 3):
+            return pow(t, 1/3)
+        else:
+            return (t/(3*pow(sigma, 2))) + (4/29)
 
 
 class Compare:
