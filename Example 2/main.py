@@ -35,7 +35,10 @@ munsell_R = []
 data = pd.read_excel('Munsell400_10_700.xlsx')
 for i in range(munsell_size):
     newdata = data[data.columns[i]]
-    munsell_R.append(newdata.to_numpy())
+    newdata = newdata.to_numpy()
+    #newdata = np.array([newdata])
+    munsell_R.append(newdata)
+
 
 data = pd.read_excel('sample-data.xlsx')
 extract_data = pd.DataFrame(data, columns=['xbar'])
@@ -67,6 +70,8 @@ Getting Data is Finished
 
 # Calculate XYZ for Munsell R values
 munsell_XYZ = []
+temp = Observation(light_source, viewer, 1)
+
 for i in range(munsell_size):
     temp = Observation(light_source, viewer, munsell_R[i])
     temp_arr = [temp.getX(), temp.getY(), temp.getZ()]
@@ -90,7 +95,7 @@ calc = MyDelaunay(points)
 for i in range(14):
     OBS = Observation(light_source, viewer, samples[i])
     R_calc, check = Interploration(calc, OBS, munsell_R)
-    #R_calc2 = myInterploration(OBS, munsell_XYZ, munsell_R)
+    # R_calc2 = myInterploration(OBS, munsell_XYZ, munsell_R)
     CAL = Observation(light_source, viewer, R_calc)
     compare = Compare(OBS, CAL)
     RMS = compare.RMS()
@@ -100,11 +105,11 @@ for i in range(14):
         gamut = 'out-of-gamut data'
     text = 'Sample'+str(i+1)+': '+gamut+' , ΔE = ' + \
         str(DeltaE)+', RMS = '+str(round(RMS, 6))
-    R_sample = OBS.R
+    R_sample = OBS.R[0]
     # Showing Data
     p1, = plt.plot(wave_length, R_sample, color='green', label="R STD")
     p2, = plt.plot(wave_length, R_calc, color='red', label="R Interpolation")
-    #p3, = plt.plot(wave_length, R_calc2[0], color='black', label="R 3")
+    # p3, = plt.plot(wave_length, R_calc2[0], color='black', label="R 3")
     lines = [p1, p2]
     plt.legend(lines, [l.get_label() for l in lines])
     plt.gcf().canvas.set_window_title('Delaunay Calculation - Sample: '+str(i+1))
@@ -123,7 +128,7 @@ points = np.array(munsell_R)
 calc = MyDelaunay(points)
 for i in range(14):
     OBS = Observation(light_source, viewer, samples[i])
-    #OBS = Observation(light_source, viewer, test)
+    # OBS = Observation(light_source, viewer, test)
     XYZ_calc, check = revInterploration(calc, OBS, munsell_XYZ)
     gamut = 'in-gamut data'
     if check is False:

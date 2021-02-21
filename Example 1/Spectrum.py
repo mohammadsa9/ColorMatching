@@ -74,31 +74,31 @@ class Observation:
             object.light = object
 
     def getK(object):
-        k = 100/np.sum(object.E.dot(object.ybar.transpose()))
+        k = 100/(np.sum((object.E)*(object.ybar)))
         return k
 
     def getX(object):
         if np.isscalar(object.R):
-            x = object.k * np.sum(object.E.dot(object.xbar.transpose()))
+            R = 1
         else:
-            x = object.k * \
-                np.sum(object.E.dot(object.xbar.transpose()).dot(object.R))
+            R = object.R
+        x = object.k * np.sum((object.E)*(object.xbar) * (R))
         return x
 
     def getY(object):
         if np.isscalar(object.R):
-            y = object.k * np.sum(object.E.dot(object.ybar.transpose()))
+            R = 1
         else:
-            y = object.k * \
-                np.sum(object.E.dot(object.ybar.transpose()).dot(object.R))
+            R = object.R
+        y = object.k * np.sum((object.E)*(object.ybar) * (R))
         return y
 
     def getZ(object):
         if np.isscalar(object.R):
-            z = object.k * np.sum(object.E.dot(object.zbar.transpose()))
+            R = 1
         else:
-            z = object.k * \
-                np.sum(object.E.dot(object.zbar.transpose()).dot(object.R))
+            R = object.R
+        z = object.k * np.sum((object.E)*(object.zbar) * (R))
         return z
 
     def getL(object):

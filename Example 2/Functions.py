@@ -71,7 +71,7 @@ class Observation:
         object.LightSource = LightSource
         object.Viewer = Viewer
         object.E = LightSource.E
-        object.R = R
+        object.R = np.array([R]).T
         object.xbar = Viewer.xbar
         object.ybar = Viewer.ybar
         object.zbar = Viewer.zbar
@@ -82,31 +82,31 @@ class Observation:
             object.light = object
 
     def getK(object):
-        k = 100/np.sum(object.E.dot(object.ybar.transpose()))
+        k = 100/(np.sum((object.E)*(object.ybar)))
         return k
 
     def getX(object):
         if np.isscalar(object.R):
-            x = object.k * np.sum(object.E.dot(object.xbar.transpose()))
+            R = 1
         else:
-            x = object.k * \
-                np.sum(object.E.dot(object.xbar.transpose()).dot(object.R))
+            R = object.R
+        x = object.k * np.sum((object.E)*(object.xbar) * (R))
         return x
 
     def getY(object):
         if np.isscalar(object.R):
-            y = object.k * np.sum(object.E.dot(object.ybar.transpose()))
+            R = 1
         else:
-            y = object.k * \
-                np.sum(object.E.dot(object.ybar.transpose()).dot(object.R))
+            R = object.R
+        y = object.k * np.sum((object.E)*(object.ybar) * (R))
         return y
 
     def getZ(object):
         if np.isscalar(object.R):
-            z = object.k * np.sum(object.E.dot(object.zbar.transpose()))
+            R = 1
         else:
-            z = object.k * \
-                np.sum(object.E.dot(object.zbar.transpose()).dot(object.R))
+            R = object.R
+        z = object.k * np.sum((object.E)*(object.zbar) * (R))
         return z
 
     def getL(object):
@@ -201,7 +201,7 @@ def distance(x1, x2):
 def myInterploration(OBS, munsell_XYZ, munsell_R):
     light_source = OBS.LightSource
     viewer = OBS.Viewer
-    R_sample = OBS.R
+    R_sample = OBS.R[0]
     sample = Observation(light_source, viewer, R_sample)
     sample_XYZ = [sample.getX(), sample.getY(), sample.getZ()]
     XYZ_BEST = np.array(
@@ -242,7 +242,7 @@ def Interploration(calc, OBS, munsell_R):
 
 
 def revInterploration(calc, OBS, munsell_XYZ):
-    R_sample = OBS.R
+    R_sample = OBS.R[0]
     R_s = R_sample.T[0]
     checker = calc.possible(R_s)
 
