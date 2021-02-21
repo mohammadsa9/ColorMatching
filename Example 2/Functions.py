@@ -27,6 +27,7 @@ class LightSource:
 class CIE:
     def __init__(obj):
         obj.X, obj.Y, obj.Z
+        obj.A, obj.B, obj.L
 
     def getX(obj):
         return obj.X
@@ -37,6 +38,15 @@ class CIE:
     def getZ(obj):
         return obj.Z
 
+    def getA(obj):
+        return obj.A
+
+    def getB(obj):
+        return obj.B
+
+    def getL(obj):
+        return obj.L
+
     def setX(obj, x):
         obj.X = x
 
@@ -45,6 +55,15 @@ class CIE:
 
     def setZ(obj, z):
         obj.Z = z
+
+    def setA(obj, a):
+        obj.A = a
+
+    def setB(obj, b):
+        obj.B = b
+
+    def setL(obj, l):
+        obj.L = l
 
 
 class Observation:
@@ -134,6 +153,7 @@ class MyDelaunay:
         obj.tri = Delaunay(points)
 
     def possible(obj, point):
+        eps = np.finfo(float).eps
         obj.s = obj.tri.find_simplex(point)
         if obj.s == -1:
             return False
@@ -149,41 +169,84 @@ class MyDelaunay:
         RR = np.array(munsell_R)
         return RR[obj.tri.simplices][obj.s]
 
+    def getResult(obj, target, source):
 
-def Interploration(calc, OBS, munsell_R):
+        A = obj.locate(target).T
+        one = mm.array_repeat(1, len(target)+1)
+        A = np.vstack((A, one))
+
+        B = np.hstack((target, [1]))
+        B = np.array([B]).T
+
+        Variables = mm.inv(A).dot(B)
+        result = Variables.T.dot(obj.getSource(source))
+
+        return result
+
+
+def pow2(x):
+    return pow(x, 2)
+
+
+def distance(x1, x2):
+    A = np.array(x1[0])
+    x2 = [x2]
+    B = np.vstack((x2, x2, x2, x2))
+    a = mm.sum([A, -1*B])
+    b = mm.applyFunction(a, pow2)
+    c = np.sum(b)
+    return pow(c, 0.5)
+
+
+def myInterploration(OBS, munsell_XYZ, munsell_R):
     light_source = OBS.LightSource
     viewer = OBS.Viewer
     R_sample = OBS.R
-
     sample = Observation(light_source, viewer, R_sample)
     sample_XYZ = [sample.getX(), sample.getY(), sample.getZ()]
+    XYZ_BEST = np.array(
+        [munsell_XYZ[0], munsell_XYZ[0], munsell_XYZ[0], munsell_XYZ[0]])
+    R_BEST = np.array(
+        [munsell_R[0], munsell_R[0], munsell_R[0], munsell_R[0]])
+    mindis = distance(
+        [munsell_XYZ[0], munsell_XYZ[0], munsell_XYZ[0], munsell_XYZ[0]], sample_XYZ)
+    max = 500
+    for x in range(max):
+        for y in range(x, max):
+            for z in range(y, max):
+                for d in range(z, max):
+                    dis = distance(
+                        [[munsell_XYZ[x], munsell_XYZ[y], munsell_XYZ[z], munsell_XYZ[d]]], sample_XYZ)
+                    if dis <= mindis:
+                        XYZ_BEST = np.array(
+                            [munsell_XYZ[x], munsell_XYZ[y], munsell_XYZ[z], munsell_XYZ[d]])
+                        R_BEST = np.array(
+                            [munsell_R[x], munsell_R[y], munsell_R[z], munsell_R[d]])
+        A = XYZ_BEST.T
+        one = mm.array_repeat(1, 4)
+        A = np.vstack((A, one))
 
+        B = np.hstack((sample_XYZ, [1]))
+        B = np.array([B]).T
+
+        Variables = mm.inv(A).dot(B)
+        result = Variables.T.dot(R_BEST)
+        return result
+
+
+def Interploration(calc, OBS, munsell_R):
+    sample_XYZ = [OBS.getX(), OBS.getY(), OBS.getZ()]
     checker = calc.possible(sample_XYZ)
-
-    A = calc.locate(sample_XYZ).T
-    A = np.vstack((A, [1, 1, 1, 1]))
-
-    sample_XYZ.append(1)
-    B = np.array([sample_XYZ]).T
-
-    Variables = mm.inv(A).dot(B)
-    R_calc = Variables.T.dot(calc.getSource(munsell_R))
-    R_calc = R_calc.T
-
+    R_calc = calc.getResult(sample_XYZ, munsell_R).T
     return R_calc, checker
 
 
 def revInterploration(calc, OBS, munsell_XYZ):
-    light_source = OBS.LightSource
-    viewer = OBS.Viewer
     R_sample = OBS.R
-
-    sample = Observation(light_source, viewer, R_sample)
-    #sample_XYZ = [sample.getX(), sample.getY(), sample.getZ()]
-
     R_s = R_sample.T[0]
     checker = calc.possible(R_s)
 
+    """
     A = calc.locate(R_s).T
     one = mm.array_repeat(1, 32)
     A = np.vstack((A, one))
@@ -193,4 +256,7 @@ def revInterploration(calc, OBS, munsell_XYZ):
 
     Variables = mm.inv(A).dot(B)
     XYZ_calc = Variables.T.dot(calc.getSource(munsell_XYZ))
+    """
+
+    XYZ_calc = calc.getResult(R_s, munsell_XYZ)
     return XYZ_calc[0], checker

@@ -82,6 +82,7 @@ plt.ylabel('R')
 plt.gcf().set_size_inches(8, 8)
 plt.show()
 
+
 # Part 1 - Interpolating R from XYZ
 # Delaunay Calculation
 points = np.array(munsell_XYZ)
@@ -89,6 +90,7 @@ calc = MyDelaunay(points)
 for i in range(14):
     OBS = Observation(light_source, viewer, samples[i])
     R_calc, check = Interploration(calc, OBS, munsell_R)
+    #R_calc2 = myInterploration(OBS, munsell_XYZ, munsell_R)
     CAL = Observation(light_source, viewer, R_calc)
     compare = Compare(OBS, CAL)
     RMS = compare.RMS()
@@ -102,9 +104,10 @@ for i in range(14):
     # Showing Data
     p1, = plt.plot(wave_length, R_sample, color='green', label="R STD")
     p2, = plt.plot(wave_length, R_calc, color='red', label="R Interpolation")
+    #p3, = plt.plot(wave_length, R_calc2[0], color='black', label="R 3")
     lines = [p1, p2]
     plt.legend(lines, [l.get_label() for l in lines])
-    plt.gcf().canvas.set_window_title('Delaunay Calculation')
+    plt.gcf().canvas.set_window_title('Delaunay Calculation - Sample: '+str(i+1))
     plt.xlabel('Wave Length')
     plt.ylabel('R')
     plt.gcf().set_size_inches(8, 8)
@@ -112,17 +115,20 @@ for i in range(14):
     plt.text(400, 1.5, r''+text)
     plt.show()
 
+
 # Part 2 - Interpolating XYZ from R
+test = np.array([munsell_R[1]]).T
 munsell_R = munsell_R[0:munsell_size2]
 points = np.array(munsell_R)
 calc = MyDelaunay(points)
-
 for i in range(14):
     OBS = Observation(light_source, viewer, samples[i])
+    #OBS = Observation(light_source, viewer, test)
     XYZ_calc, check = revInterploration(calc, OBS, munsell_XYZ)
     gamut = 'in-gamut data'
-    if check == False:
+    if check is False:
         gamut = 'out-of-gamut data'
+
     # Show Result
     m1_means, m1_std = (OBS.getX(), OBS.getY(), OBS.getZ()), (0, 0, 0)
     m2_means, m2_std = (XYZ_calc[0], XYZ_calc[1],
