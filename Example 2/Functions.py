@@ -70,11 +70,11 @@ class Observation:
     def __init__(object, LightSource, Viewer, R=1):
         object.LightSource = LightSource
         object.Viewer = Viewer
-        object.E = LightSource.E
-        object.R = np.array([R]).T
-        object.xbar = Viewer.xbar
-        object.ybar = Viewer.ybar
-        object.zbar = Viewer.zbar
+        object.E = mm.D1(LightSource.E)
+        object.R = R
+        object.xbar = mm.D1(Viewer.xbar)
+        object.ybar = mm.D1(Viewer.ybar)
+        object.zbar = mm.D1(Viewer.zbar)
         object.k = object.getK()
         if not np.isscalar(R):
             object.light = Observation(LightSource, Viewer, 1)
@@ -89,7 +89,7 @@ class Observation:
         if np.isscalar(object.R):
             R = 1
         else:
-            R = object.R
+            R = mm.D1(object.R)
         x = object.k * np.sum((object.E)*(object.xbar) * (R))
         return x
 
@@ -97,7 +97,7 @@ class Observation:
         if np.isscalar(object.R):
             R = 1
         else:
-            R = object.R
+            R = mm.D1(object.R)
         y = object.k * np.sum((object.E)*(object.ybar) * (R))
         return y
 
@@ -105,7 +105,7 @@ class Observation:
         if np.isscalar(object.R):
             R = 1
         else:
-            R = object.R
+            R = mm.D1(object.R)
         z = object.k * np.sum((object.E)*(object.zbar) * (R))
         return z
 
@@ -242,21 +242,8 @@ def Interploration(calc, OBS, munsell_R):
 
 
 def revInterploration(calc, OBS, munsell_XYZ):
-    R_sample = OBS.R[0]
-    R_s = R_sample.T[0]
+    R_sample = OBS.R
+    R_s = R_sample.T
     checker = calc.possible(R_s)
-
-    """
-    A = calc.locate(R_s).T
-    one = mm.array_repeat(1, 32)
-    A = np.vstack((A, one))
-
-    R_s = np.hstack((R_s, [1]))
-    B = np.array([R_s]).T
-
-    Variables = mm.inv(A).dot(B)
-    XYZ_calc = Variables.T.dot(calc.getSource(munsell_XYZ))
-    """
-
     XYZ_calc = calc.getResult(R_s, munsell_XYZ)
     return XYZ_calc[0], checker

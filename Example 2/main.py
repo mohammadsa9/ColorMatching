@@ -71,7 +71,7 @@ Getting Data is Finished
 # Calculate XYZ for Munsell R values
 munsell_XYZ = []
 temp = Observation(light_source, viewer, 1)
-
+#print(temp.getX(), temp.getY(), temp.getZ())
 for i in range(munsell_size):
     temp = Observation(light_source, viewer, munsell_R[i])
     temp_arr = [temp.getX(), temp.getY(), temp.getZ()]
@@ -105,7 +105,7 @@ for i in range(14):
         gamut = 'out-of-gamut data'
     text = 'Sample'+str(i+1)+': '+gamut+' , ΔE = ' + \
         str(DeltaE)+', RMS = '+str(round(RMS, 6))
-    R_sample = OBS.R[0]
+    R_sample = OBS.R
     # Showing Data
     p1, = plt.plot(wave_length, R_sample, color='green', label="R STD")
     p2, = plt.plot(wave_length, R_calc, color='red', label="R Interpolation")
@@ -116,8 +116,8 @@ for i in range(14):
     plt.xlabel('Wave Length')
     plt.ylabel('R')
     plt.gcf().set_size_inches(8, 8)
-    plt.ylim([0, 2])
-    plt.text(400, 1.5, r''+text)
+    plt.ylim([0, 1])
+    plt.text(400, 1, r''+text)
     plt.show()
 
 

@@ -16,6 +16,14 @@ def sum(m):
     return result
 
 
+def D1(m):
+    return m.flatten()
+
+
+def D2(m):
+    return np.array([m])
+
+
 def inv(m):
     return np.linalg.pinv(m)
 
@@ -40,10 +48,7 @@ def array_repeat(value, repeat):
 
 
 def cleanNaN(m):
-    for i in range(len(m)):
-        if math.isnan(m[i]):
-            break
-    return np.delete(m, np.s_[i:], 0)
+    return m[~np.isnan(m)]
 
 
 def applyFunction(a, b):
