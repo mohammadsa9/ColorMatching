@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy.spatial import Delaunay
+from pyhull.delaunay import DelaunayTri
 # My Libraries
 from Spectrum import *
 from MyPlot import *
@@ -106,7 +108,7 @@ blue_KOVERS = BBB.getKOVERS()
 red_KOVERS = RRR.getKOVERS()
 yellow_KOVERS = YYY.getKOVERS()
 
-
+# Method 1
 all_KOVERS = np.hstack((blue_KOVERS, red_KOVERS, yellow_KOVERS))
 delta_KOVERS = mm.sum([k_std, -1*k_sub])
 C_First = findC1(all_KOVERS, delta_KOVERS)
@@ -125,6 +127,7 @@ compare_1 = Compare(EST, STD)
 RMS_First = compare_1.RMS()
 DeltaE_First = compare_1.delta_E()
 
+# Method 2
 Data3 = findC2(STD, R_sub, C_First, all_KOVERS, maxRMS)
 C_Last = Data3[0]
 all_E = Data3[1]
@@ -143,12 +146,90 @@ compare_2 = Compare(STD, ESTN)
 RMS_Last = compare_2.RMS()
 DeltaE_Last = compare_2.delta_E()
 
+# Method 3 Interpolation using XYZ
+pr = 10
+Dis1 = np.linspace(0*C_First[0], 2*C_First[0], pr)
+Dis2 = np.linspace(0*C_First[1], 2*C_First[1], pr)
+Dis3 = np.linspace(0*C_First[2], 2*C_First[2], pr)
+
+XYZ_Lookup = []
+C_Lookup = []
+
+Mix = Mixture(R_sub)
+for x in range(pr):
+    for y in range(pr):
+        for z in range(pr):
+            Mix.clear()
+            Mix.add(Dis1[x][0], blue_KOVERS)
+            Mix.add(Dis2[y][0], red_KOVERS)
+            Mix.add(Dis3[z][0], yellow_KOVERS)
+            Temp = Observation(light_source, viewer, Mix.getR())
+            XYZ_Lookup.append([Temp.getX(), Temp.getY(), Temp.getZ()])
+            C_Lookup.append([Dis1[x][0], Dis2[y][0], Dis3[z][0]])
+
+XYZ_Lookup = np.array(XYZ_Lookup)
+C_Lookup = np.array(C_Lookup)
+
+Temp = Observation(light_source, viewer, R_std)
+Find = [Temp.getX(), Temp.getY(), Temp.getZ()]
+calc = MyDelaunay(XYZ_Lookup)
+res = calc.getResult(Find, C_Lookup)
+C_Inter1 = res[0]
+
+Mix.clear()
+Mix.add(C_Inter1[0], blue_KOVERS)
+Mix.add(C_Inter1[1], red_KOVERS)
+Mix.add(C_Inter1[2], yellow_KOVERS)
+R_Inter1 = Mix.getR()
+Inter1 = Observation(light_source, viewer, Mix.getR())
+compare_3 = Compare(Inter1, STD)
+RMS_Inter1 = compare_3.RMS()
+DeltaE_Inter1 = compare_3.delta_E()
+
+
+# Method 4 Interpolation using R
+pr = 10
+Dis1 = np.linspace(0*C_First[0], 2*C_First[0], pr)
+Dis2 = np.linspace(0*C_First[1], 2*C_First[1], pr)
+Dis3 = np.linspace(0*C_First[2], 2*C_First[2], pr)
+
+R_Lookup = []
+C_Lookup = []
+
+Mix = Mixture(R_sub)
+for x in range(pr):
+    for y in range(pr):
+        for z in range(pr):
+            Mix.clear()
+            Mix.add(Dis1[x][0], blue_KOVERS)
+            Mix.add(Dis2[y][0], red_KOVERS)
+            Mix.add(Dis3[z][0], yellow_KOVERS)
+            R_Lookup.append(Mix.getR().T[0])
+            C_Lookup.append([Dis1[x][0], Dis2[y][0], Dis3[z][0]])
+
+R_Lookup = R_Lookup[20:53]
+R_Lookup = np.array(R_Lookup)
+C_Lookup = np.array(C_Lookup)
+calc = MyDelaunay(R_Lookup, 'QJ')
+res = calc.getResult(R_std.T[0], C_Lookup)
+C_Inter2 = res[0]
+print(C_Inter2)
+Mix.clear()
+Mix.add(C_Inter2[0], blue_KOVERS)
+Mix.add(C_Inter2[1], red_KOVERS)
+Mix.add(C_Inter2[2], yellow_KOVERS)
+R_Inter2 = Mix.getR()
+Inter2 = Observation(light_source, viewer, Mix.getR())
+compare_4 = Compare(Inter2, STD)
+RMS_Inter2 = compare_4.RMS()
+DeltaE_Inter2 = compare_4.delta_E()
 """
 
 Showing Results
 
 """
 # Draw K / S For 3 Dyes
+"""
 fig, axs = plt.subplots(3)
 axs[0].plot(wave_length, blue_KOVERS)
 axs[0].set_title('Blue')
@@ -162,79 +243,19 @@ for ax in axs.flat:
 plt.tight_layout()
 fig.set_size_inches(5, 8)
 plt.show()
+"""
 
-# Draw R For Diffrent Methodes
-fig, axs = plt.subplots(3)
-axs[0].set_title('Method 1')
-p1, = axs[0].plot(wave_length, R_std, color='green', label="R STD")
-p2, = axs[0].plot(wave_length, R_First, color='red', label="R First Method")
-lines = [p1, p2]
-axs[0].legend(lines, [l.get_label() for l in lines])
-
-axs[1].set_title('Method 2')
-p1, = axs[1].plot(wave_length, R_std, color='green', label="R STD")
-p2, = axs[1].plot(wave_length, R_First, color='blue', label="R Second Method")
-lines = [p1, p2]
-axs[1].legend(lines, [l.get_label() for l in lines])
-
-axs[2].set_title('All in One')
-p1, = axs[2].plot(wave_length, R_std, color='green', label="R STD")
-p2, = axs[2].plot(wave_length, R_First, color='red', label="R First Method")
-p3, = axs[2].plot(wave_length, R_Last, color='blue', label="R Second Method")
-lines = [p1, p2, p3]
-plt.legend(lines, [l.get_label() for l in lines])
-
-
-plt.gcf().canvas.set_window_title('Compare شکل2-1')
-for ax in axs.flat:
-    ax.set(xlabel='Wave Length', ylabel='R')
-plt.tight_layout()
-fig.set_size_inches(4, 8)
-plt.show()
-
-# Draw R Better Way
+# Draw all R
 p1, = plt.plot(wave_length, R_std, color='green', label="R STD")
 p2, = plt.plot(wave_length, R_First, color='red', label="R First Method")
 p3, = plt.plot(wave_length, R_Last, color='blue', label="R Second Method")
-lines = [p1, p2, p3]
+p4, = plt.plot(wave_length, R_Inter1, color='purple',
+               label="R Interpolation using XYZ")
+# p5, = plt.plot(wave_length, R_Inter2, color='purple', label = "R Interpolation using R")
+lines = [p1, p2, p3, p4]
 plt.legend(lines, [l.get_label() for l in lines])
 plt.gcf().canvas.set_window_title('Bigger Comparison شکل2-2')
 plt.xlabel('Wave Length')
 plt.ylabel('R')
 plt.gcf().set_size_inches(8, 8)
-plt.show()
-
-# Draw Delta E in Loop
-plt.plot(mm.array_distance(1, 1, num_tried), all_E, color='red')
-plt.gcf().canvas.set_window_title('Delta E شکل3')
-plt.xlabel('Number of tries')
-plt.ylabel('Δ E')
-plt.show()
-
-# Draw Delta E & RMS & C For 3 Dyes in two methods
-m1_means, m1_std = (RMS_First, DeltaE_First,
-                    C_First[0][0], C_First[1][0], C_First[2][0]), (0, 0, 0, 0, 0)
-m2_means, m2_std = (RMS_Last, DeltaE_Last,
-                    C_Last[0][0], C_Last[1][0], C_Last[2][0]), (0, 0, 0, 0, 0)
-
-ind = np.arange(len(m1_means))  # the x locations for the groups
-width = 0.35  # the width of the bars
-
-fig, ax = plt.subplots()
-rects1 = ax.bar(ind - width/2, m1_means, width, yerr=m1_std,
-                label='Method 1')
-rects2 = ax.bar(ind + width/2, m2_means, width, yerr=m2_std,
-                label='Method 2')
-
-# Add some text for labels, title and custom x-axis tick labels, etc.
-# ax.set_ylabel('Scores')
-# ax.set_title('Scores by STH')
-ax.set_xticks(ind)
-ax.set_xticklabels(('RMS', 'Δ E', "C Blue", "C Red", "C Yellow"))
-ax.legend()
-fig.tight_layout()
-autolabel(rects1, ax, "center", precise)
-autolabel(rects2, ax, "center", precise)
-plt.gcf().set_size_inches(10, 10)
-plt.gcf().canvas.set_window_title('جدول 1')
 plt.show()

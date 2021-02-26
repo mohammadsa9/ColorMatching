@@ -9,6 +9,10 @@ def dot(m):
     return result
 
 
+def inv(m):
+    return np.linalg.pinv(m)
+
+
 def sum(m):
     result = np.add(m[0], m[1])
     for i in range(2, len(m)):

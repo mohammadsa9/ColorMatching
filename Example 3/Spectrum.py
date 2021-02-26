@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial import Delaunay
 import MyMath as mm
 
 
@@ -155,6 +156,44 @@ class Mixture:
 
     def clear(obj):
         obj.result = mm.applyFunction(obj.r_sub, find_KOVERS)
+
+
+class MyDelaunay:
+    def __init__(obj, points, opt=''):
+        obj.points = points
+        obj.tri = Delaunay(points, furthest_site=False,
+                           incremental=False, qhull_options=opt)
+
+    def possible(obj, point):
+        eps = np.finfo(float).eps
+        obj.s = obj.tri.find_simplex(point)
+        if obj.s == -1:
+            return False
+        else:
+            return True
+
+    def locate(obj, point):
+        obj.possible(point)
+        temp_point = obj.points[obj.tri.simplices][obj.s]
+        return temp_point
+
+    def getSource(obj, munsell_R):
+        RR = np.array(munsell_R)
+        return RR[obj.tri.simplices][obj.s]
+
+    def getResult(obj, target, source):
+
+        A = obj.locate(target).T
+        one = mm.array_repeat(1, len(target)+1)
+        A = np.vstack((A, one))
+
+        B = np.hstack((target, [1]))
+        B = np.array([B]).T
+
+        Variables = mm.inv(A).dot(B)
+        result = Variables.T.dot(obj.getSource(source))
+
+        return result
 
 
 def findC1(all_KOVERS, delta_KOVERS):
