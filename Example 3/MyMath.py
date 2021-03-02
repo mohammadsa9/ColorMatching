@@ -9,6 +9,42 @@ def dot(m):
     return result
 
 
+def zebra(m):
+    m = D1(m)
+    temp = []
+    for i in range(len(m)):
+        if i % 2 == 1:
+            temp.append(m[i])
+    return np.array(temp)
+
+
+def zip(m, k):
+    for i in range(k):
+        m = zebra(m)
+    return m
+
+
+def array_zebra(arr):
+    list = []
+    for i in range(len(arr)):
+        list.append(zebra(arr[i]))
+    return np.array(list)
+
+
+def array_zip(arr, k):
+    for i in range(k):
+        arr = array_zebra(arr)
+    return arr
+
+
+def D1(m):
+    return m.flatten()
+
+
+def D2(m):
+    return np.array([m])
+
+
 def inv(m):
     return np.linalg.pinv(m)
 
