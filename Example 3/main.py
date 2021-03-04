@@ -190,15 +190,15 @@ DeltaE_Inter1 = compare_3.delta_E()
 # Method 4 Interpolation using R
 
 # Number of points
-pr = 10
+pr = 5
 
 # Number of times to reduce dimension
-dim = 3
+dim = 2
 # 0 => 31 , 1 => 15, 2 => 7, 3 => 3
 
-Dis1 = np.linspace(0, 1, pr)
-Dis2 = np.linspace(0, 1, pr)
-Dis3 = np.linspace(0, 1, pr)
+Dis1 = np.linspace(0*C_First[0][0], 2*C_First[0][0], pr)
+Dis2 = np.linspace(0*C_First[0][0], 2*C_First[1][0], pr)
+Dis3 = np.linspace(0*C_First[0][0], 2*C_First[2][0], pr)
 
 R_Lookup = []
 C_Lookup = []
@@ -213,6 +213,17 @@ for x in range(pr):
             Mix.add(Dis3[z], yellow_KOVERS)
             R_Lookup.append(Mix.getR().T[0])
             C_Lookup.append([Dis1[x], Dis2[y], Dis3[z]])
+            # Draw R
+            p1, = plt.plot(wave_length, R_std, color='green', label="R STD")
+            p2, = plt.plot(wave_length, Mix.getR(
+            ).T[0], color='red', label="R Calc")
+            lines = [p1, p2]
+            plt.legend(lines, [l.get_label() for l in lines])
+            plt.xlabel('Wave Length')
+            plt.ylabel('R')
+            plt.gcf().set_size_inches(8, 8)
+            # plt.show()
+            plt.cla()
 
 R_Lookup = R_Lookup
 R_Lookup = np.array(R_Lookup)
@@ -224,16 +235,18 @@ C_Lookup = np.array(C_Lookup)
 Qt Qc Qi Qz Qx Qbb Qv Qr Qm Qx Q9
 Qbb Qc Qz Qx Q12
 Qbb Qc Qz Q12
+Qbb QbB Qt Qf Qm Q12
 More info http://www.qhull.org/html/qh-optq.htm
 """
-calc = MyDelaunay(R_Lookup, 'Qbb Qt QbB Qf Qm Q12')
+calc = MyDelaunay(R_Lookup, 'Qt')
+#tri = DelaunayTri(R_Lookup)
 R_Find = R_std.T[0]
 R_Find = mm.zip(R_Find, dim)
 res = calc.getResult(R_Find, C_Lookup)
 C_Inter2 = res[0]
 
-# print(calc.possible(R_Find))
-# print(C_Inter2)
+print(calc.possible(R_Find))
+print(C_Inter2)
 
 
 Mix.clear()
@@ -245,7 +258,7 @@ Inter2 = Observation(light_source, viewer, Mix.getR())
 compare_4 = Compare(Inter2, STD)
 RMS_Inter2 = compare_4.RMS()
 DeltaE_Inter2 = compare_4.delta_E()
-# print(RMS_Inter2)
+print(RMS_Inter2)
 
 """
 
@@ -277,6 +290,7 @@ p4, = plt.plot(wave_length, R_Inter1, color='purple',
                label="C Interpolation using XYZ")
 p5, = plt.plot(wave_length, R_Inter2, color='black',
                label="C Interpolation using R")
+#p6, = plt.plot(wave_length, R_sub, color='yellow', label="R SUB")
 lines = [p1, p2, p3, p4, p5]
 plt.legend(lines, [l.get_label() for l in lines])
 plt.gcf().canvas.set_window_title('Bigger Comparison شکل2-2')

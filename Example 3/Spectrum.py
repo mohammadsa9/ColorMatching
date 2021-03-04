@@ -162,11 +162,12 @@ class MyDelaunay:
     def __init__(obj, points, opt=''):
         obj.points = points
         obj.tri = Delaunay(points, furthest_site=False,
-                           incremental=False, qhull_options=opt)
+                           incremental=True, qhull_options=opt)
 
     def possible(obj, point):
         eps = np.finfo(float).eps
-        obj.s = obj.tri.find_simplex(point)
+        # 0.009
+        obj.s = obj.tri.find_simplex(point, bruteforce=False, tol=0.01)
         if obj.s == -1:
             return False
         else:
