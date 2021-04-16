@@ -3,7 +3,7 @@
 
 # # Libraries
 
-# In[ ]:
+# In[1]:
 
 
 import numpy as np
@@ -17,7 +17,7 @@ from pyhull.delaunay import DelaunayTri
 # # My Libraries
 # 
 
-# In[ ]:
+# In[2]:
 
 
 from libraries.Spectrum import *
@@ -27,13 +27,13 @@ import libraries.MyMath as mm
 
 # # Initial Data
 
-# In[ ]:
+# In[3]:
 
 
 start_wave = 400
 end_wave = 700
 data_size = 31
-distance = (end_wave - start_wave)/(data_size-1)
+distance = (end_wave - start_wave) / (data_size - 1)
 
 blue_sample_num = 7
 yellow_sample_num = 7
@@ -54,67 +54,67 @@ example_data = mm.array_repeat(1, data_size)
 """
 Start Getting Data From Excel file
 """
-data = pd.read_excel('data/data.xls')
+data = pd.read_excel("data/data.xls")
 
-extract_data = pd.DataFrame(data, columns=['c'])
+extract_data = pd.DataFrame(data, columns=["c"])
 c = extract_data.to_numpy()
 c = mm.cleanNaN(c)
 
 R_red = []
-for i in range(1, red_sample_num+1):
-    extract_data = pd.DataFrame(data, columns=['r'+str(i)])
+for i in range(1, red_sample_num + 1):
+    extract_data = pd.DataFrame(data, columns=["r" + str(i)])
     R_red.append(extract_data.to_numpy())
 
 R_yellow = []
-for i in range(1, yellow_sample_num+1):
-    extract_data = pd.DataFrame(data, columns=['y'+str(i)])
+for i in range(1, yellow_sample_num + 1):
+    extract_data = pd.DataFrame(data, columns=["y" + str(i)])
     R_yellow.append(extract_data.to_numpy())
 
 R_blue = []
-for i in range(1, blue_sample_num+1):
-    extract_data = pd.DataFrame(data, columns=['b'+str(i)])
+for i in range(1, blue_sample_num + 1):
+    extract_data = pd.DataFrame(data, columns=["b" + str(i)])
     R_blue.append(extract_data.to_numpy())
 
 
-extract_data = pd.DataFrame(data, columns=['Rsub'])
+extract_data = pd.DataFrame(data, columns=["Rsub"])
 R_sub = extract_data.to_numpy()
 k_sub = mm.applyFunction(R_sub, find_KOVERS)
 
-extract_data = pd.DataFrame(data, columns=['Rstd'])
+extract_data = pd.DataFrame(data, columns=["Rstd"])
 R_std = extract_data.to_numpy()
 k_std = mm.applyFunction(R_std, find_KOVERS)
 
-extract_data = pd.DataFrame(data, columns=['xbar'])
+extract_data = pd.DataFrame(data, columns=["xbar"])
 xbar = extract_data.to_numpy()
 
-extract_data = pd.DataFrame(data, columns=['ybar'])
+extract_data = pd.DataFrame(data, columns=["ybar"])
 ybar = extract_data.to_numpy()
 
-extract_data = pd.DataFrame(data, columns=['zbar'])
+extract_data = pd.DataFrame(data, columns=["zbar"])
 zbar = extract_data.to_numpy()
 
 viewer = Viewer(xbar, ybar, zbar)
 
-extract_data = pd.DataFrame(data, columns=['D65'])
+extract_data = pd.DataFrame(data, columns=["D65"])
 E_D65 = extract_data.to_numpy()
 light_source = LightSource(E_D65)
 
 munsell_size = 1269
 munsell_R = []
-data = pd.read_excel('data/Munsell400_10_700.xlsx')
+data = pd.read_excel("data/Munsell400_10_700.xlsx")
 for i in range(munsell_size):
     newdata = data[data.columns[i]]
     newdata = newdata.to_numpy()
-    #newdata = np.array([newdata])
+    # newdata = np.array([newdata])
     munsell_R.append(newdata)
 munsell_R = np.array(munsell_R).T
 
 munsell_A = np.cov(munsell_R)
 print(munsell_A.shape)
 eigenValues, eigenVectors = linalg.eig(munsell_A)
-idx = eigenValues.argsort()[::-1]   
+idx = eigenValues.argsort()[::-1]
 eigenValues = eigenValues[idx]
-eigenVectors = eigenVectors[:,idx]
+eigenVectors = eigenVectors[:, idx]
 
 print(eigenVectors)
 print(eigenVectors[0:3].shape)
@@ -122,7 +122,7 @@ print(eigenVectors[0:3].shape)
 
 # # K OVER S for dyes
 
-# In[ ]:
+# In[4]:
 
 
 # initial object to find K OVER S for Blue Dye
@@ -152,11 +152,11 @@ yellow_KOVERS = YYY.getKOVERS()
 
 # # Method 1 Spectrophotometric Matching
 
-# In[ ]:
+# In[5]:
 
 
 all_KOVERS = np.hstack((blue_KOVERS, red_KOVERS, yellow_KOVERS))
-delta_KOVERS = mm.sum([k_std, -1*k_sub])
+delta_KOVERS = mm.sum([k_std, -1 * k_sub])
 C_First = findC1(all_KOVERS, delta_KOVERS)
 
 
@@ -176,7 +176,7 @@ DeltaE_First = compare_1.delta_E()
 
 # # Method 2 Colorimetric Matching
 
-# In[ ]:
+# In[6]:
 
 
 Data3 = findC2(STD, R_sub, C_First, all_KOVERS, maxRMS)
@@ -200,7 +200,7 @@ DeltaE_Last = compare_2.delta_E()
 
 # # SET R Substrate to 1
 
-# In[ ]:
+# In[7]:
 
 
 R_sub = np.array([mm.array_repeat(1, data_size)]).T
@@ -208,14 +208,13 @@ R_sub = np.array([mm.array_repeat(1, data_size)]).T
 
 # # Method 3 Interpolation using XYZ
 
-# In[ ]:
-
+# In[8]:
 
 
 pr = 10
-Dis1 = np.linspace(0*C_First[0], 1, pr)
-Dis2 = np.linspace(0*C_First[1], 1, pr)
-Dis3 = np.linspace(0*C_First[2], 1, pr)
+Dis1 = np.linspace(0 * C_First[0], 1, pr)
+Dis2 = np.linspace(0 * C_First[1], 1, pr)
+Dis3 = np.linspace(0 * C_First[2], 1, pr)
 
 XYZ_Lookup = []
 C_Lookup = []
@@ -259,14 +258,14 @@ print(DeltaE_Inter1)
 
 # # Method 4 Interpolation using R Principal Component 3D
 
-# In[ ]:
+# In[9]:
 
 
 # Number of points
 pr = 10
 
 # Number of times to reduce dimension
-dim = 3 # 3D
+dim = 3  # 3D
 
 Dis1 = np.linspace(0, 1, pr)
 Dis2 = np.linspace(0, 1, pr)
@@ -292,7 +291,7 @@ R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors)
 # print(R_Lookup.shape)
 
 C_Lookup = np.array(C_Lookup)
-calc = MyDelaunay(R_Lookup, 'Qt')
+calc = MyDelaunay(R_Lookup, "Qt")
 
 # Changing R_std
 # R_std = np.array([munsell_R.T[55]]).T
@@ -317,47 +316,49 @@ DeltaE_Inter2 = compare_4.delta_E()
 print(C_Inter2)
 print(RMS_Inter2)
 
-p1, = plt.plot(wave_length, R_std, color='green', label="R STD")
-p2, = plt.plot(wave_length, R_Inter2, color='black',label="C Interpolation using R")
+(p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
+(p2,) = plt.plot(wave_length, R_Inter2, color="black", label="C Interpolation using R")
 lines = [p1, p2]
 plt.legend(lines, [l.get_label() for l in lines])
-plt.gcf().canvas.set_window_title('Comparison')
-plt.xlabel('Wave Length')
-plt.ylabel('R')
+plt.gcf().canvas.set_window_title("Comparison")
+plt.xlabel("Wave Length")
+plt.ylabel("R")
 plt.gcf().set_size_inches(8, 8)
 plt.show()
 
 
 # # Showing Results
 
-# In[ ]:
+# In[10]:
 
 
-p1, = plt.plot(wave_length, R_std, color='green', label="R STD")
-p2, = plt.plot(wave_length, R_First, color='red', label="R First Method")
-p3, = plt.plot(wave_length, R_Last, color='blue', label="R Second Method")
-p4, = plt.plot(wave_length, R_Inter1, color='purple',label="C Interpolation using XYZ")
-p5, = plt.plot(wave_length, R_Inter2, color='black',label="C Interpolation using R")
-#p6, = plt.plot(wave_length, R_sub, color='yellow', label="R SUB")
+(p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
+(p2,) = plt.plot(wave_length, R_First, color="red", label="R First Method")
+(p3,) = plt.plot(wave_length, R_Last, color="blue", label="R Second Method")
+(p4,) = plt.plot(
+    wave_length, R_Inter1, color="purple", label="C Interpolation using XYZ"
+)
+(p5,) = plt.plot(wave_length, R_Inter2, color="black", label="C Interpolation using R")
+# p6, = plt.plot(wave_length, R_sub, color='yellow', label="R SUB")
 lines = [p1, p2, p3, p4, p5]
 plt.legend(lines, [l.get_label() for l in lines])
-plt.gcf().canvas.set_window_title('Comparison')
-plt.xlabel('Wave Length')
-plt.ylabel('R')
+plt.gcf().canvas.set_window_title("Comparison")
+plt.xlabel("Wave Length")
+plt.ylabel("R")
 plt.gcf().set_size_inches(8, 8)
 plt.show()
 
 
 # # Try Method 4 for different spectrum
 
-# In[ ]:
+# In[11]:
 
 
 # Number of points
 pr = 10
 
 # Number of times to reduce dimension
-dim = 3 # 3D
+dim = 3  # 3D
 
 Dis1 = np.linspace(0, 1, pr)
 Dis2 = np.linspace(0, 1, pr)
@@ -383,7 +384,7 @@ R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors)
 # print(R_Lookup.shape)
 
 C_Lookup = np.array(C_Lookup)
-calc = MyDelaunay(R_Lookup, 'Qt')
+calc = MyDelaunay(R_Lookup, "Qt")
 
 for i in range(10):
     # Changing R_std
@@ -395,7 +396,7 @@ for i in range(10):
     try:
         res = calc.getResult(R_Find, C_Lookup)
     except Exception:
-        C_Inter2 = np.array([0,0,0])
+        C_Inter2 = np.array([0, 0, 0])
 
     C_Inter2 = res[0]
 
@@ -413,13 +414,15 @@ for i in range(10):
     print(C_Inter2)
     print(RMS_Inter2)
 
-    p1, = plt.plot(wave_length, R_std, color='green', label="R STD")
-    p2, = plt.plot(wave_length, R_Inter2, color='black',label="C Interpolation using R")
+    (p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
+    (p2,) = plt.plot(
+        wave_length, R_Inter2, color="black", label="C Interpolation using R"
+    )
     lines = [p1, p2]
     plt.legend(lines, [l.get_label() for l in lines])
-    plt.gcf().canvas.set_window_title('Comparison')
-    plt.xlabel('Wave Length')
-    plt.ylabel('R')
+    plt.gcf().canvas.set_window_title("Comparison")
+    plt.xlabel("Wave Length")
+    plt.ylabel("R")
     plt.gcf().set_size_inches(8, 8)
     plt.show()
 
