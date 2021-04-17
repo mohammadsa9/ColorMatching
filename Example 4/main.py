@@ -99,6 +99,7 @@ extract_data = pd.DataFrame(data, columns=["D65"])
 E_D65 = extract_data.to_numpy()
 light_source = LightSource(E_D65)
 
+# Principal Component
 munsell_size = 1269
 munsell_R = []
 data = pd.read_excel("data/Munsell400_10_700.xlsx")
@@ -110,14 +111,14 @@ for i in range(munsell_size):
 munsell_R = np.array(munsell_R).T
 
 munsell_A = np.cov(munsell_R)
-print(munsell_A.shape)
 eigenValues, eigenVectors = linalg.eig(munsell_A)
 idx = eigenValues.argsort()[::-1]
 eigenValues = eigenValues[idx]
 eigenVectors = eigenVectors[:, idx]
 
-print(eigenVectors)
-print(eigenVectors[0:3].shape)
+# print(eigenVectors)
+print(eigenVectors[0:3])
+print(eigenValues[0:3])
 
 
 # # K OVER S for dyes
@@ -252,8 +253,8 @@ RMS_Inter1 = compare_3.RMS()
 DeltaE_Inter1 = compare_3.delta_E()
 
 print(C_Inter1)
-print(RMS_Inter1)
-print(DeltaE_Inter1)
+print("RMS:", RMS_Inter1)
+print("ΔE:", DeltaE_Inter1)
 
 
 # # Method 4 Interpolation using R Principal Component 3D
@@ -262,7 +263,7 @@ print(DeltaE_Inter1)
 
 
 # Number of points
-pr = 10
+pr = 50
 
 # Number of times to reduce dimension
 dim = 3  # 3D
@@ -314,17 +315,12 @@ RMS_Inter2 = compare_4.RMS()
 DeltaE_Inter2 = compare_4.delta_E()
 
 print(C_Inter2)
-print(RMS_Inter2)
+print("RMS:", RMS_Inter2)
 
 (p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
 (p2,) = plt.plot(wave_length, R_Inter2, color="black", label="C Interpolation using R")
 lines = [p1, p2]
-plt.legend(lines, [l.get_label() for l in lines])
-plt.gcf().canvas.set_window_title("Comparison")
-plt.xlabel("Wave Length")
-plt.ylabel("R")
-plt.gcf().set_size_inches(8, 8)
-plt.show()
+draw_R_style1(lines)
 
 
 # # Showing Results
@@ -339,14 +335,9 @@ plt.show()
     wave_length, R_Inter1, color="purple", label="C Interpolation using XYZ"
 )
 (p5,) = plt.plot(wave_length, R_Inter2, color="black", label="C Interpolation using R")
-# p6, = plt.plot(wave_length, R_sub, color='yellow', label="R SUB")
+# (p6,) = plt.plot(wave_length, R_sub, color='yellow', label="R SUB")
 lines = [p1, p2, p3, p4, p5]
-plt.legend(lines, [l.get_label() for l in lines])
-plt.gcf().canvas.set_window_title("Comparison")
-plt.xlabel("Wave Length")
-plt.ylabel("R")
-plt.gcf().set_size_inches(8, 8)
-plt.show()
+draw_R_style1(lines)
 
 
 # # Try Method 4 for different spectrum
@@ -354,39 +345,8 @@ plt.show()
 # In[11]:
 
 
-# Number of points
-pr = 10
-
-# Number of times to reduce dimension
-dim = 3  # 3D
-
-Dis1 = np.linspace(0, 1, pr)
-Dis2 = np.linspace(0, 1, pr)
-Dis3 = np.linspace(0, 1, pr)
-
-R_Lookup = []
-C_Lookup = []
-
-Mix = Mixture(R_sub)
-for x in range(pr):
-    for y in range(pr):
-        for z in range(pr):
-            Mix.clear()
-            Mix.add(Dis1[x], blue_KOVERS)
-            Mix.add(Dis2[y], red_KOVERS)
-            Mix.add(Dis3[z], yellow_KOVERS)
-            R_Lookup.append(Mix.getR().T[0])
-            C_Lookup.append([Dis1[x], Dis2[y], Dis3[z]])
-
-R_Lookup = R_Lookup
-R_Lookup = np.array(R_Lookup)
-R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors)
-# print(R_Lookup.shape)
-
-C_Lookup = np.array(C_Lookup)
-calc = MyDelaunay(R_Lookup, "Qt")
-
-for i in range(10):
+print("Start")
+for i in range(munsell_size):
     # Changing R_std
     R_std = np.array([munsell_R.T[i]]).T
 
@@ -396,33 +356,32 @@ for i in range(10):
     try:
         res = calc.getResult(R_Find, C_Lookup)
     except Exception:
-        C_Inter2 = np.array([0, 0, 0])
+        continue
+        # C_CInter = np.array([0, 0, 0])
 
-    C_Inter2 = res[0]
+    C_CInter = res[0]
 
     Mix.clear()
-    Mix.add(C_Inter2[0], blue_KOVERS)
-    Mix.add(C_Inter2[1], red_KOVERS)
-    Mix.add(C_Inter2[2], yellow_KOVERS)
-    R_Inter2 = Mix.getR()
-    Inter2 = Observation(light_source, viewer, Mix.getR())
+    Mix.add(C_CInter[0], blue_KOVERS)
+    Mix.add(C_CInter[1], red_KOVERS)
+    Mix.add(C_CInter[2], yellow_KOVERS)
+    R_CInter = Mix.getR()
+    Inter = Observation(light_source, viewer, Mix.getR())
     STD = Observation(light_source, viewer, R_std)
-    compare_4 = Compare(Inter2, STD)
-    RMS_Inter2 = compare_4.RMS()
-    DeltaE_Inter2 = compare_4.delta_E()
+    compare_4 = Compare(Inter, STD)
+    RMS_CInter = compare_4.RMS()
+    DeltaE_CInter = compare_4.delta_E()
 
-    print(C_Inter2)
-    print(RMS_Inter2)
+    if RMS_CInter < 0.3:
+        print(C_CInter)
+        print("RMS: ", RMS_CInter)
 
-    (p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
-    (p2,) = plt.plot(
-        wave_length, R_Inter2, color="black", label="C Interpolation using R"
-    )
-    lines = [p1, p2]
-    plt.legend(lines, [l.get_label() for l in lines])
-    plt.gcf().canvas.set_window_title("Comparison")
-    plt.xlabel("Wave Length")
-    plt.ylabel("R")
-    plt.gcf().set_size_inches(8, 8)
-    plt.show()
+        (p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
+        (p2,) = plt.plot(
+            wave_length, R_CInter, color="black", label="C Interpolation using R"
+        )
+        lines = [p1, p2]
+
+        draw_R_style1(lines)
+print("End")
 
