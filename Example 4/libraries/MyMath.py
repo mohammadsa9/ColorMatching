@@ -32,7 +32,22 @@ def array_zebra(arr):
 
 
 def PC(arr, k, vector):
-    return dot([arr, vector[0:k].T])
+    start = 0
+    return dot([arr, vector[start : start + k].T])
+
+
+def lift(arr):
+    result = np.power(arr, 2)
+    result = np.sum(result)
+    result = np.power(result, 0.5)
+    return np.hstack((arr, result))
+
+
+def array_lift(arr):
+    list = []
+    for i in range(len(arr)):
+        list.append(lift(arr[i]))
+    return np.array(list)
 
 
 def array_PC(arr, k, vector):

@@ -256,6 +256,13 @@ print(C_Inter1)
 print("RMS:", RMS_Inter1)
 print("ΔE:", DeltaE_Inter1)
 
+(p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
+(p2,) = plt.plot(
+    wave_length, R_Inter1, color="black", label="C Interpolation using XYZ"
+)
+lines = [p1, p2]
+draw_R_style1(lines)
+
 
 # # Method 4 Interpolation using R Principal Component 3D
 
@@ -263,7 +270,7 @@ print("ΔE:", DeltaE_Inter1)
 
 
 # Number of points
-pr = 50
+pr = 200
 
 # Number of times to reduce dimension
 dim = 3  # 3D
@@ -289,6 +296,7 @@ for x in range(pr):
 R_Lookup = R_Lookup
 R_Lookup = np.array(R_Lookup)
 R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors)
+# R_Lookup = mm.array_lift(R_Lookup)
 # print(R_Lookup.shape)
 
 C_Lookup = np.array(C_Lookup)
@@ -300,6 +308,16 @@ calc = MyDelaunay(R_Lookup, "Qt")
 # Finding
 R_Find = R_std.T[0]
 R_Find = mm.PC(R_Find, dim, eigenVectors)
+# R_Find = mm.lift(R_Find)
+print(R_Find)
+
+"""
+from scipy.interpolate import LinearNDInterpolator
+from scipy.interpolate import NearestNDInterpolator
+why = LinearNDInterpolator(R_Lookup,C_Lookup)
+why = NearestNDInterpolator(R_Lookup,C_Lookup)
+print("lib",why(R_Find))
+"""
 res = calc.getResult(R_Find, C_Lookup)
 C_Inter2 = res[0]
 
@@ -316,6 +334,7 @@ DeltaE_Inter2 = compare_4.delta_E()
 
 print(C_Inter2)
 print("RMS:", RMS_Inter2)
+print("ΔE:", DeltaE_Inter2)
 
 (p1,) = plt.plot(wave_length, R_std, color="green", label="R STD")
 (p2,) = plt.plot(wave_length, R_Inter2, color="black", label="C Interpolation using R")
@@ -346,6 +365,7 @@ draw_R_style1(lines)
 
 
 print("Start")
+munsell_size = 0
 for i in range(munsell_size):
     # Changing R_std
     R_std = np.array([munsell_R.T[i]]).T
