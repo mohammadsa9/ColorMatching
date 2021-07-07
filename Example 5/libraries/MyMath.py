@@ -9,6 +9,29 @@ def dot(m):
     return result
 
 
+def D1(m):
+    return m.flatten()
+
+
+def D2(m):
+    return np.array([m])
+
+
+def inv(m):
+    return np.linalg.pinv(m)
+
+
+def sum(m):
+    result = np.add(m[0], m[1])
+    for i in range(2, len(m)):
+        result = np.add(result, m[i])
+    return result
+
+
+def reverse(m):
+    return np.linalg.pinv(m)
+
+
 def zebra(m):
     m = D1(m)
     temp = []
@@ -31,8 +54,9 @@ def array_zebra(arr):
     return np.array(list)
 
 
-def PC(arr, k, vector):
+def PC(arr, k, vector, R_mean):
     start = 0
+    arr = sum([arr, -1 * R_mean.T[0]])
     return dot([arr, vector[start : start + k].T])
 
 
@@ -50,10 +74,10 @@ def array_lift(arr):
     return np.array(list)
 
 
-def array_PC(arr, k, vector):
+def array_PC(arr, k, vector, R_mean):
     list = []
     for i in range(len(arr)):
-        list.append(PC(arr[i], k, vector))
+        list.append(PC(arr[i], k, vector, R_mean))
     return np.array(list)
 
 
@@ -61,29 +85,6 @@ def array_zip(arr, k):
     for i in range(k):
         arr = array_zebra(arr)
     return arr
-
-
-def D1(m):
-    return m.flatten()
-
-
-def D2(m):
-    return np.array([m])
-
-
-def inv(m):
-    return np.linalg.pinv(m)
-
-
-def sum(m):
-    result = np.add(m[0], m[1])
-    for i in range(2, len(m)):
-        result = np.add(result, m[i])
-    return result
-
-
-def reverse(m):
-    return np.linalg.pinv(m)
 
 
 def array_distance(start, distance, end):
@@ -110,3 +111,15 @@ def cleanNaN(m):
 
 def applyFunction(a, b):
     return np.vectorize(b)(a)
+
+
+def RMS(arr1, arr2):
+    arr1 = np.array(arr1)
+    arr2 = np.array(arr2)
+    arr1 = D1(arr1)
+    arr2 = D1(arr2)
+    result = np.subtract(arr1, arr2)
+    result = np.power(result, 2)
+    result = np.sum(result)
+    result = np.power(result, 0.5)
+    return result

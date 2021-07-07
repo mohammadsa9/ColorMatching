@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.spatial import Delaunay
 from . import MyMath as mm
@@ -20,6 +19,7 @@ class Dye:
     def __init__(object, sample_num, size):
         object.num = sample_num
         object.size = size
+        object.KoverS = []
 
     def setC(object, c):
         object.c = c
@@ -46,7 +46,11 @@ class Dye:
                 .dot(OBS)
             )
             Res.append(KOVERS[0])
-        return np.array(Res)
+            obj.KoverS = np.array(Res)
+        return obj.KoverS
+
+    def getR(obj):
+        return mm.applyFunction(obj.KoverS, find_r)
 
 
 class Viewer:
@@ -104,6 +108,12 @@ class Observation:
         z = object.k * np.sum((object.E) * (object.zbar) * (R))
         return z
 
+    def getxy(object):
+        X = object.getX()
+        Y = object.getY()
+        Z = object.getZ()
+        return [X / (X + Y + Z), Y / (X + Y + Z)]
+
     def getL(object):
         return 116 * object.f(object.getY() / object.light.getY()) - 16
 
@@ -131,6 +141,8 @@ class Compare:
     def __init__(object, obj1, obj2):
         object.mat1 = obj1
         object.mat2 = obj2
+        object.mat1.R = mm.D1(object.mat1.R)
+        object.mat2.R = mm.D1(object.mat2.R)
 
     def delta_E(obj):
         temp = (
@@ -268,3 +280,16 @@ def findC2(STD, r_sub, C_First, all_KOVERS, maxRMS):
         r_new = Mix.getR()
         ESTN = Observation(light_source, viewer, r_new)
     return [CC, all_E, i]
+
+
+def GFC(R, Rhat):
+    # R[31,1269]
+    Rhat = mm.D2(Rhat)
+    GFC = []
+    for i in range(0, len(R)):
+        GFC.append(
+            np.inner(R.T[:, i], Rhat.T[:, i])
+            / (((sum(R.T[:, i] ** 2)) ** (0.5)) * (sum(Rhat.T[:, i] ** 2)) ** (0.5))
+        )
+    GFC_MEAN = sum(GFC) / 1269
+    return GFC_MEAN

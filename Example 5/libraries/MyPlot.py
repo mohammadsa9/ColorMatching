@@ -23,11 +23,20 @@ def autolabel(rects, ax, xpos="center", p=6):
         )
 
 
-def draw_R_style1(lines):
+def draw_R_style1(lines, comment=""):
     plt.legend(lines, [l.get_label() for l in lines])
     plt.gcf().canvas.set_window_title("Comparison")
-    plt.xlabel("Wave Length")
+    plt.xlabel("Wave Length \n\n" + comment)
     plt.ylabel("R")
     plt.gcf().set_size_inches(8, 8)
     plt.ylim(0, 1)
+    plt.show()
+
+
+def draw_KoverS_style1(lines):
+    plt.legend(lines, [l.get_label() for l in lines])
+    plt.gcf().canvas.set_window_title("Comparison")
+    plt.xlabel("Wave Length")
+    plt.ylabel("K/S")
+    plt.gcf().set_size_inches(8, 8)
     plt.show()
