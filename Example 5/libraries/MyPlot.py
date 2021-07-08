@@ -43,7 +43,7 @@ def draw_KoverS_style1(lines):
     plt.show()
 
 
-def draw_CIE1931(arr=[], color="black"):
+def draw_CIE1931(arr=[]):
     # Plotting the *CIE 1931 Chromaticity Diagram*.
     plot_chromaticity_diagram_CIE1931(standalone=False)
 
@@ -51,7 +51,7 @@ def draw_CIE1931(arr=[], color="black"):
         xy_D65 = spec.getxy()
         xy = xy_D65
         x, y = xy
-        plt.plot(x, y, "o-", color=color)
+        plt.plot(x, y, "o-", color=spec.color)
         if spec.name != "":
             plt.annotate(
                 spec.name,

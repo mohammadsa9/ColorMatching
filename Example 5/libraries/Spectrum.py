@@ -66,12 +66,13 @@ class LightSource:
 
 
 class Observation:
-    def __init__(object, LightSource, Viewer, R=1, name=""):
+    def __init__(object, LightSource, Viewer, R=1, name="", color="black"):
         object.LightSource = LightSource
         object.Viewer = Viewer
         object.E = LightSource.E
         object.R = R
         object.name = name
+        object.color = color
         object.xbar = Viewer.xbar
         object.ybar = Viewer.ybar
         object.zbar = Viewer.zbar
