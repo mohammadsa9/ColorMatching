@@ -18,8 +18,6 @@ from pyhull.delaunay import DelaunayTri
 from tabulate import tabulate
 from prettytable import PrettyTable
 
-from colour.plotting import *
-
 
 # # My Libraries
 # 
@@ -191,65 +189,17 @@ draw_KoverS_style1(lines)
 
 print()
 
-# Plotting the *CIE 1931 Chromaticity Diagram*.
-plot_chromaticity_diagram_CIE1931(standalone=False)
-
 # D65
-OBS = Observation(light_source, viewer, 1)
-xy_D65 = OBS.getxy()
-xy = xy_D65
-x, y = xy
-plt.plot(x, y, "o-", color="black")
-plt.annotate(
-    "D65",
-    xy=xy,
-    xytext=(-50, 30),
-    textcoords="offset points",
-    arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
-)
+OBS1 = Observation(light_source, viewer, 1, "D65")
 # Blue
-OBS = Observation(light_source, viewer, BBB.getR())
-xy_D65 = OBS.getxy()
-xy = xy_D65
-x, y = xy
-plt.plot(x, y, "o-", color="black")
-plt.annotate(
-    "Blue dye",
-    xy=xy,
-    xytext=(-50, 30),
-    textcoords="offset points",
-    arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
-)
-
+OBS2 = Observation(light_source, viewer, BBB.getR(), "Blue Dye")
 # Red
-OBS = Observation(light_source, viewer, RRR.getR())
-xy_D65 = OBS.getxy()
-xy = xy_D65
-x, y = xy
-plt.plot(x, y, "o-", color="black")
-plt.annotate(
-    "Red dye",
-    xy=xy,
-    xytext=(-50, 30),
-    textcoords="offset points",
-    arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
-)
-
+OBS3 = Observation(light_source, viewer, RRR.getR(), "Red Dye")
 # Yellow
-OBS = Observation(light_source, viewer, YYY.getR())
-xy_D65 = OBS.getxy()
-xy = xy_D65
-x, y = xy
-plt.plot(x, y, "o-", color="black")
-plt.annotate(
-    "Yellow dye",
-    xy=xy,
-    xytext=(-50, 30),
-    textcoords="offset points",
-    arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
-)
-# Displaying the plot.
-render(standalone=True, limits=(-0.1, 0.9, -0.1, 0.9), x_tighten=True, y_tighten=True)
+OBS4 = Observation(light_source, viewer, YYY.getR(), "Yellow Dye")
+
+color_points = [OBS1, OBS2, OBS3, OBS4]
+draw_CIE1931(color_points)
 
 
 # # SET R Substrate for New Surface = 1
@@ -292,6 +242,28 @@ R_Lookup = np.array(R_Lookup)
 XYZ_Lookup = np.array(XYZ_Lookup)
 C_Lookup = np.array(C_Lookup)
 
+look = PrettyTable()
+look.field_names = [
+    "R",
+    "PCC",
+    "XYZ",
+    "C Blue Red Yellow",
+]
+
+dim = 3
+for i in range(len(R_Lookup)):
+    look.add_row(
+        [
+            "...",
+            mm.PC(R_Lookup[i], dim, eigenVectors, R_mean),
+            XYZ_Lookup[i],
+            C_Lookup[i],
+        ]
+    )
+
+print(look)
+
+print()
 print(Dis1)
 
 
@@ -342,7 +314,7 @@ print(Dis1)
 
 dim = 3
 R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors, R_mean)
-calc = MyDelaunay(R_Lookup)
+R_calc = MyDelaunay(R_Lookup)
 
 """ Another method to calculate with delaunay
     from scipy.interpolate import NearestNDInterpolator
@@ -368,7 +340,7 @@ for i in range(len(R_Samples)):
     R_Find = R_Samples[i]
     R_Find = mm.PC(R_Find, dim, eigenVectors, R_mean)
 
-    res = calc.getResult(R_Find, C_Lookup)
+    res = R_calc.getResult(R_Find, C_Lookup)
     C_Inter2 = res[0]
 
     Mix.clear()
@@ -380,14 +352,14 @@ for i in range(len(R_Samples)):
     Inter2 = Observation(light_source, viewer, R_Inter2)
     STD = Observation(light_source, viewer, R_std)
 
-    compare_4 = Compare(STD, Inter2)
-    RMS_Inter2 = compare_4.RMS()
-    DeltaE_Inter2 = compare_4.delta_E()
+    compare = Compare(STD, Inter2)
+    RMS_Inter = compare.RMS()
+    DeltaE_Inter = compare.delta_E()
     GFC = 0
 
     text_R = "R: " + str(R_std)
-    text_RMS = "RMS: " + str(RMS_Inter2)
-    text_DeltaE = "ΔE: " + str(DeltaE_Inter2)
+    text_RMS = "RMS: " + str(RMS_Inter)
+    text_DeltaE = "ΔE: " + str(DeltaE_Inter)
     text_GFC = "GFC: " + str(GFC)
     text_C_Real = "Real C: " + str(C_Samples[i])
     text_C_Cal = "Interpolated C: " + str(C_Inter2)
@@ -407,28 +379,28 @@ for i in range(len(R_Samples)):
     )
 
     # Result
-    M_R_RMS = M_R_RMS + RMS_Inter2
-    M_R_DeltaE = M_R_DeltaE + DeltaE_Inter2
+    M_R_RMS = M_R_RMS + RMS_Inter
+    M_R_DeltaE = M_R_DeltaE + DeltaE_Inter
     M_R_DeltaC = M_R_DeltaC + mm.RMS(C_Samples[i], C_Inter2)
 
     if i == 0:
-        M_R_minRMS = RMS_Inter2
-        M_R_maxRMS = RMS_Inter2
+        M_R_minRMS = RMS_Inter
+        M_R_maxRMS = RMS_Inter
 
-        M_R_minE = DeltaE_Inter2
-        M_R_maxE = DeltaE_Inter2
+        M_R_minE = DeltaE_Inter
+        M_R_maxE = DeltaE_Inter
 
-    if RMS_Inter2 < M_R_minRMS:
-        M_R_minRMS = RMS_Inter2
+    if RMS_Inter < M_R_minRMS:
+        M_R_minRMS = RMS_Inter
 
-    if RMS_Inter2 > M_R_maxRMS:
-        M_R_maxRMS = RMS_Inter2
+    if RMS_Inter > M_R_maxRMS:
+        M_R_maxRMS = RMS_Inter
 
-    if DeltaE_Inter2 < M_R_minE:
-        M_R_minE = DeltaE_Inter2
+    if DeltaE_Inter < M_R_minE:
+        M_R_minE = DeltaE_Inter
 
-    if DeltaE_Inter2 > M_R_maxE:
-        M_R_maxE = DeltaE_Inter2
+    if DeltaE_Inter > M_R_maxE:
+        M_R_maxE = DeltaE_Inter
 
     (p1,) = plt.plot(wave_length, R_std, color="green", label="R Sample " + str(i + 1))
     (p2,) = plt.plot(wave_length, R_Inter2, color="black", label="R Interpolated (PCA)")
@@ -454,7 +426,7 @@ print("Max ΔE: ", M_R_maxE)
 # In[10]:
 
 
-calc = MyDelaunay(XYZ_Lookup)
+XYZ_calc = MyDelaunay(XYZ_Lookup)
 
 # Result
 M_XYZ_RMS = 0
@@ -473,7 +445,7 @@ for i in range(len(R_Samples)):
     Find = XYZ_Samples[i]
     Temp = Observation(light_source, viewer, R_std)
 
-    res = calc.getResult(Find, C_Lookup)
+    res = XYZ_calc.getResult(Find, C_Lookup)
     C_Inter1 = res[0]
 
     Mix.clear()
@@ -483,13 +455,13 @@ for i in range(len(R_Samples)):
     R_Inter1 = Mix.getR()
     Inter1 = Observation(light_source, viewer, R_Inter1)
     STD = Observation(light_source, viewer, R_std)
-    compare_3 = Compare(Inter1, STD)
-    RMS_Inter1 = compare_3.RMS()
-    DeltaE_Inter1 = compare_3.delta_E()
+    compare = Compare(Inter1, STD)
+    RMS_Inter = compare.RMS()
+    DeltaE_Inter = compare.delta_E()
 
     text_R = "R: " + str(R_std)
-    text_RMS = "RMS: " + str(RMS_Inter1)
-    text_DeltaE = "ΔE: " + str(DeltaE_Inter1)
+    text_RMS = "RMS: " + str(RMS_Inter)
+    text_DeltaE = "ΔE: " + str(DeltaE_Inter)
     text_GFC = "GFC: " + str("?")
     text_C_Real = "Real C: " + str(C_Samples[i])
     text_C_Cal = "Interpolated C: " + str(C_Inter1)
@@ -509,28 +481,28 @@ for i in range(len(R_Samples)):
     )
 
     # Result
-    M_XYZ_RMS = M_XYZ_RMS + RMS_Inter1
-    M_XYZ_DeltaE = M_XYZ_DeltaE + DeltaE_Inter1
+    M_XYZ_RMS = M_XYZ_RMS + RMS_Inter
+    M_XYZ_DeltaE = M_XYZ_DeltaE + DeltaE_Inter
     M_XYZ_DeltaC = M_XYZ_DeltaC + mm.RMS(C_Samples[i], C_Inter1)
 
     if i == 0:
-        M_XYZ_minRMS = RMS_Inter1
-        M_XYZ_maxRMS = RMS_Inter1
+        M_XYZ_minRMS = RMS_Inter
+        M_XYZ_maxRMS = RMS_Inter
 
-        M_XYZ_minE = DeltaE_Inter1
-        M_XYZ_maxE = DeltaE_Inter1
+        M_XYZ_minE = DeltaE_Inter
+        M_XYZ_maxE = DeltaE_Inter
 
-    if RMS_Inter1 < M_XYZ_minRMS:
-        M_XYZ_minRMS = RMS_Inter1
+    if RMS_Inter < M_XYZ_minRMS:
+        M_XYZ_minRMS = RMS_Inter
 
-    if RMS_Inter1 > M_XYZ_maxRMS:
-        M_XYZ_maxRMS = RMS_Inter1
+    if RMS_Inter > M_XYZ_maxRMS:
+        M_XYZ_maxRMS = RMS_Inter
 
-    if DeltaE_Inter1 < M_XYZ_minE:
-        M_XYZ_minE = DeltaE_Inter1
+    if DeltaE_Inter < M_XYZ_minE:
+        M_XYZ_minE = DeltaE_Inter
 
-    if DeltaE_Inter1 > M_XYZ_maxE:
-        M_XYZ_maxE = DeltaE_Inter1
+    if DeltaE_Inter > M_XYZ_maxE:
+        M_XYZ_maxE = DeltaE_Inter
 
     (p1,) = plt.plot(wave_length, R_std, color="green", label="R Sample " + str(i + 1))
     (p2,) = plt.plot(wave_length, R_Inter1, color="black", label="R Interpolated (XYZ)")
@@ -553,7 +525,7 @@ print("Max ΔE: ", M_XYZ_maxE)
 
 # # Showing Results
 
-# In[19]:
+# In[11]:
 
 
 x = PrettyTable()
