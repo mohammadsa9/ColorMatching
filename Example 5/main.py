@@ -307,27 +307,25 @@ draw_R_style1(lines)
 
 all_pointes = []
 
-# D65
-# OBS_new = Observation(light_source, viewer, 1, "D65")
-# all_pointes.append(OBS_new)
-
-# Blue
-OBS_new = Observation(light_source, viewer, BBB.getR(), "Blue Dye")
-all_pointes.append(OBS_new)
-# Red
-OBS_new = Observation(light_source, viewer, RRR.getR(), "Red Dye")
-all_pointes.append(OBS_new)
-# Yellow
-OBS_new = Observation(light_source, viewer, YYY.getR(), "Yellow Dye")
-all_pointes.append(OBS_new)
-
+for i in R_Lookup:
+    OBS_new = Observation(light_source, viewer, i, "", "green")
+    all_pointes.append(OBS_new)
 for i in R_Samples:
     OBS_new = Observation(light_source, viewer, i, "", "blue")
     all_pointes.append(OBS_new)
 
-for i in R_Lookup:
-    OBS_new = Observation(light_source, viewer, i, "", "green")
-    all_pointes.append(OBS_new)
+# Blue
+OBS_new = Observation(light_source, viewer, BBB.getR(), "Blue Dye", "black")
+all_pointes.append(OBS_new)
+# Red
+OBS_new = Observation(light_source, viewer, RRR.getR(), "Red Dye", "black")
+all_pointes.append(OBS_new)
+# Yellow
+OBS_new = Observation(light_source, viewer, YYY.getR(), "Yellow Dye", "black")
+all_pointes.append(OBS_new)
+# D65
+OBS_new = Observation(light_source, viewer, 1, "D65", "white")
+all_pointes.append(OBS_new)
 
 draw_CIE1931(all_pointes)
 
