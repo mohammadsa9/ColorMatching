@@ -64,3 +64,26 @@ def draw_CIE1931(arr=[]):
     render(
         standalone=True, limits=(-0.1, 0.9, -0.1, 0.9), x_tighten=True, y_tighten=True
     )
+
+
+def draw_CIE1931_style2(arr=[]):
+    # Plotting the *CIE 1931 Chromaticity Diagram*.
+    plot_chromaticity_diagram_CIE1931(standalone=False)
+
+    for spec in arr:
+        xy_D65 = spec.getxy()
+        xy = xy_D65
+        x, y = xy
+        plt.plot(x, y, ".", color=spec.color, markersize=5)
+        if spec.name != "":
+            plt.annotate(
+                spec.name,
+                xy=xy,
+                xytext=(-50, 30),
+                textcoords="offset points",
+                arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
+            )
+    # Displaying the plot.
+    render(
+        standalone=True, limits=(-0.1, 0.9, -0.1, 0.9), x_tighten=True, y_tighten=True
+    )

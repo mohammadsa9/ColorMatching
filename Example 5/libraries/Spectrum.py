@@ -22,10 +22,10 @@ class Dye:
         object.KoverS = []
 
     def setC(object, c):
-        object.c = c
+        object.c = mm.D2(mm.D1(np.array(c))).T
 
     def setSub(obj, sub):
-        obj.sub = sub
+        obj.sub = mm.D2(mm.D1(np.array(sub))).T
 
     def setR(obj, R):
         obj.ref = []
@@ -55,14 +55,14 @@ class Dye:
 
 class Viewer:
     def __init__(object, xbar, ybar, zbar):
-        object.xbar = xbar
-        object.ybar = ybar
-        object.zbar = zbar
+        object.xbar = mm.D2(mm.D1(np.array(xbar))).T
+        object.ybar = mm.D2(mm.D1(np.array(ybar))).T
+        object.zbar = mm.D2(mm.D1(np.array(zbar))).T
 
 
 class LightSource:
     def __init__(object, E):
-        object.E = E
+        object.E = mm.D2(mm.D1(np.array(E))).T
 
 
 class Observation:
@@ -79,6 +79,9 @@ class Observation:
         object.k = object.getK()
         if not np.isscalar(R):
             object.light = Observation(LightSource, Viewer, 1)
+            # Fix R
+            object.R = mm.D2(mm.D1(np.array(object.R))).T
+
         else:
             object.light = object
 
@@ -173,10 +176,11 @@ class Compare:
 
 class Mixture:
     def __init__(object, r_sub):
-        object.r_sub = r_sub
+        object.r_sub = mm.D2(mm.D1(np.array(r_sub))).T
         object.result = mm.applyFunction(r_sub, find_KOVERS)
 
     def add(obj, c, KOVERS):
+        KOVERS = mm.D2(mm.D1(np.array(KOVERS))).T
         obj.result = mm.sum([obj.result, c * KOVERS])
 
     def getKOVERS(obj):
@@ -230,6 +234,26 @@ class MyDelaunay:
         return result
 
 
+def GFC(R, Rhat):
+    # R[31,1269]
+    Rhat = mm.D2(Rhat)
+    GFC = []
+    for i in range(0, len(R)):
+        GFC.append(
+            np.inner(R.T[:, i], Rhat.T[:, i])
+            / (((sum(R.T[:, i] ** 2)) ** (0.5)) * (sum(Rhat.T[:, i] ** 2)) ** (0.5))
+        )
+    GFC_MEAN = sum(GFC) / 1269
+    return GFC_MEAN
+
+
+"""
+End Of File
+"""
+
+# Not needed anymore:
+
+
 def findC1(all_KOVERS, delta_KOVERS):
     temp = mm.dot([all_KOVERS.transpose(), all_KOVERS])
     temp = mm.reverse(temp)
@@ -264,7 +288,6 @@ def findC2(STD, r_sub, C_First, all_KOVERS, maxRMS):
     ESTN = Observation(light_source, viewer, R_First)
     STD = Observation(light_source, viewer, r_std)
     for i in range(1000):
-        # print("E", i, delta_E(ESTN, STD))
         comp = Compare(STD, ESTN)
         D_E = comp.delta_E()
         if D_E <= maxRMS:
@@ -282,16 +305,3 @@ def findC2(STD, r_sub, C_First, all_KOVERS, maxRMS):
         r_new = Mix.getR()
         ESTN = Observation(light_source, viewer, r_new)
     return [CC, all_E, i]
-
-
-def GFC(R, Rhat):
-    # R[31,1269]
-    Rhat = mm.D2(Rhat)
-    GFC = []
-    for i in range(0, len(R)):
-        GFC.append(
-            np.inner(R.T[:, i], Rhat.T[:, i])
-            / (((sum(R.T[:, i] ** 2)) ** (0.5)) * (sum(Rhat.T[:, i] ** 2)) ** (0.5))
-        )
-    GFC_MEAN = sum(GFC) / 1269
-    return GFC_MEAN
