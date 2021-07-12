@@ -352,12 +352,19 @@ R_calc = MyDelaunay(R_Lookup)
 M_R_RMS = 0
 M_R_DeltaE = 0
 M_R_DeltaC = 0
+M_R_GFC = 0
 
 M_R_minRMS = 0
 M_R_maxRMS = 0
 
 M_R_minE = 0
 M_R_maxE = 0
+
+M_R_minC = 0
+M_R_maxC = 0
+
+M_R_minGFC = 0
+M_R_maxGFC = 0
 
 for i in range(len(R_Samples)):
     # print(R_Samples[i])
@@ -366,28 +373,29 @@ for i in range(len(R_Samples)):
     R_Find = mm.PC(R_Find, dim, eigenVectors, R_mean)
 
     res = R_calc.getResult(R_Find, C_Lookup)
-    C_Inter2 = res[0]
+    C_Inter = res[0]
 
     Mix.clear()
-    Mix.add(C_Inter2[0], blue_KOVERS)
-    Mix.add(C_Inter2[1], red_KOVERS)
-    Mix.add(C_Inter2[2], yellow_KOVERS)
-    R_Inter2 = Mix.getR()
+    Mix.add(C_Inter[0], blue_KOVERS)
+    Mix.add(C_Inter[1], red_KOVERS)
+    Mix.add(C_Inter[2], yellow_KOVERS)
+    R_Inter = Mix.getR()
 
-    Inter2 = Observation(light_source, viewer, R_Inter2)
+    Inter = Observation(light_source, viewer, R_Inter)
     STD = Observation(light_source, viewer, R_std)
 
-    compare = Compare(STD, Inter2)
+    compare = Compare(STD, Inter)
     RMS_Inter = compare.RMS()
     DeltaE_Inter = compare.delta_E()
-    GFC = 0
+    GFC_Inter = compare.GFC()
+    DeltaC_Inter = mm.RMS(C_Samples[i], C_Inter)
 
     text_R = "R: " + str(R_std)
     text_RMS = "RMS: " + str(RMS_Inter)
     text_DeltaE = "ΔE: " + str(DeltaE_Inter)
-    text_GFC = "GFC: " + str(GFC)
+    text_GFC = "GFC: " + str(GFC_Inter)
     text_C_Real = "Real C: " + str(C_Samples[i])
-    text_C_Cal = "Interpolated C: " + str(C_Inter2)
+    text_C_Cal = "Interpolated C: " + str(C_Inter)
 
     text_all = (
         text_RMS
@@ -406,11 +414,18 @@ for i in range(len(R_Samples)):
     # Result
     M_R_RMS = M_R_RMS + RMS_Inter
     M_R_DeltaE = M_R_DeltaE + DeltaE_Inter
-    M_R_DeltaC = M_R_DeltaC + mm.RMS(C_Samples[i], C_Inter2)
+    M_R_DeltaC = M_R_DeltaC + DeltaC_Inter
+    M_R_GFC = M_R_GFC + GFC_Inter
 
     if i == 0:
         M_R_minRMS = RMS_Inter
         M_R_maxRMS = RMS_Inter
+
+        M_R_minC = DeltaC_Inter
+        M_R_maxC = DeltaC_Inter
+
+        M_R_minGFC = GFC_Inter
+        M_R_maxGFC = GFC_Inter
 
         M_R_minE = DeltaE_Inter
         M_R_maxE = DeltaE_Inter
@@ -427,8 +442,20 @@ for i in range(len(R_Samples)):
     if DeltaE_Inter > M_R_maxE:
         M_R_maxE = DeltaE_Inter
 
+    if DeltaC_Inter < M_R_minC:
+        M_R_minC = DeltaC_Inter
+
+    if DeltaC_Inter > M_R_maxC:
+        M_R_maxC = DeltaC_Inter
+
+    if GFC_Inter < M_R_minGFC:
+        M_R_minGFC = GFC_Inter
+
+    if GFC_Inter > M_R_maxGFC:
+        M_R_maxGFC = GFC_Inter
+
     (p1,) = plt.plot(wave_length, R_std, color="green", label="R Sample " + str(i + 1))
-    (p2,) = plt.plot(wave_length, R_Inter2, color="black", label="R Interpolated (PCA)")
+    (p2,) = plt.plot(wave_length, R_Inter, color="black", label="R Interpolated (PCA)")
     lines = [p1, p2]
     draw_R_style1(lines, comment=text_all)
 
@@ -436,14 +463,20 @@ for i in range(len(R_Samples)):
 M_R_RMS = M_R_RMS / len(R_Samples)
 M_R_DeltaE = M_R_DeltaE / len(R_Samples)
 M_R_DeltaC = M_R_DeltaC / len(R_Samples)
+M_R_GFC = M_R_GFC / len(R_Samples)
 
 print("mean RMS: ", M_R_RMS)
 print("mean ΔE: ", M_R_DeltaE)
 print("mean ΔC: ", M_R_DeltaC)
+print("mean GFC: ", M_R_GFC)
 print("Min RMS: ", M_R_minRMS)
 print("Max RMS: ", M_R_maxRMS)
 print("Min ΔE: ", M_R_minE)
 print("Max ΔE: ", M_R_maxE)
+print("Min ΔC: ", M_R_minC)
+print("Max ΔC: ", M_R_maxC)
+print("Min GFC: ", M_R_minGFC)
+print("Max GFC: ", M_R_maxGFC)
 
 
 # # Method 2 Interpolation using XYZ => For Comparison
@@ -457,12 +490,19 @@ XYZ_calc = MyDelaunay(XYZ_Lookup)
 M_XYZ_RMS = 0
 M_XYZ_DeltaE = 0
 M_XYZ_DeltaC = 0
+M_XYZ_GFC = 0
 
 M_XYZ_minRMS = 0
 M_XYZ_maxRMS = 0
 
 M_XYZ_minE = 0
 M_XYZ_maxE = 0
+
+M_XYZ_minC = 0
+M_XYZ_maxC = 0
+
+M_XYZ_minGFC = 0
+M_XYZ_maxGFC = 0
 
 for i in range(len(R_Samples)):
     # print(R_Samples[i])
@@ -471,25 +511,27 @@ for i in range(len(R_Samples)):
     Temp = Observation(light_source, viewer, R_std)
 
     res = XYZ_calc.getResult(Find, C_Lookup)
-    C_Inter1 = res[0]
+    C_Inter = res[0]
 
     Mix.clear()
-    Mix.add(C_Inter1[0], blue_KOVERS)
-    Mix.add(C_Inter1[1], red_KOVERS)
-    Mix.add(C_Inter1[2], yellow_KOVERS)
-    R_Inter1 = Mix.getR()
-    Inter1 = Observation(light_source, viewer, R_Inter1)
+    Mix.add(C_Inter[0], blue_KOVERS)
+    Mix.add(C_Inter[1], red_KOVERS)
+    Mix.add(C_Inter[2], yellow_KOVERS)
+    R_Inter = Mix.getR()
+    Inter = Observation(light_source, viewer, R_Inter)
     STD = Observation(light_source, viewer, R_std)
-    compare = Compare(Inter1, STD)
+    compare = Compare(Inter, STD)
     RMS_Inter = compare.RMS()
     DeltaE_Inter = compare.delta_E()
+    GFC_Inter = compare.GFC()
+    DeltaC_Inter = mm.RMS(C_Samples[i], C_Inter)
 
     text_R = "R: " + str(R_std)
     text_RMS = "RMS: " + str(RMS_Inter)
     text_DeltaE = "ΔE: " + str(DeltaE_Inter)
-    text_GFC = "GFC: " + str("?")
+    text_GFC = "GFC: " + str(GFC_Inter)
     text_C_Real = "Real C: " + str(C_Samples[i])
-    text_C_Cal = "Interpolated C: " + str(C_Inter1)
+    text_C_Cal = "Interpolated C: " + str(C_Inter)
 
     text_all = (
         text_RMS
@@ -508,7 +550,8 @@ for i in range(len(R_Samples)):
     # Result
     M_XYZ_RMS = M_XYZ_RMS + RMS_Inter
     M_XYZ_DeltaE = M_XYZ_DeltaE + DeltaE_Inter
-    M_XYZ_DeltaC = M_XYZ_DeltaC + mm.RMS(C_Samples[i], C_Inter1)
+    M_XYZ_DeltaC = M_XYZ_DeltaC + DeltaC_Inter
+    M_XYZ_GFC = M_XYZ_GFC + GFC_Inter
 
     if i == 0:
         M_XYZ_minRMS = RMS_Inter
@@ -516,6 +559,12 @@ for i in range(len(R_Samples)):
 
         M_XYZ_minE = DeltaE_Inter
         M_XYZ_maxE = DeltaE_Inter
+
+        M_XYZ_minC = DeltaC_Inter
+        M_XYZ_maxC = DeltaC_Inter
+
+        M_XYZ_minGFC = GFC_Inter
+        M_XYZ_maxGFC = GFC_Inter
 
     if RMS_Inter < M_XYZ_minRMS:
         M_XYZ_minRMS = RMS_Inter
@@ -529,8 +578,20 @@ for i in range(len(R_Samples)):
     if DeltaE_Inter > M_XYZ_maxE:
         M_XYZ_maxE = DeltaE_Inter
 
+    if DeltaC_Inter < M_XYZ_minC:
+        M_XYZ_minC = DeltaC_Inter
+
+    if DeltaC_Inter > M_XYZ_maxC:
+        M_XYZ_maxC = DeltaC_Inter
+
+    if GFC_Inter < M_XYZ_minGFC:
+        M_XYZ_minGFC = GFC_Inter
+
+    if GFC_Inter > M_XYZ_maxGFC:
+        M_XYZ_maxGFC = GFC_Inter
+
     (p1,) = plt.plot(wave_length, R_std, color="green", label="R Sample " + str(i + 1))
-    (p2,) = plt.plot(wave_length, R_Inter1, color="black", label="R Interpolated (XYZ)")
+    (p2,) = plt.plot(wave_length, R_Inter, color="black", label="R Interpolated (XYZ)")
     lines = [p1, p2]
     draw_R_style1(lines, comment=text_all)
 
@@ -538,14 +599,20 @@ for i in range(len(R_Samples)):
 M_XYZ_RMS = M_XYZ_RMS / len(R_Samples)
 M_XYZ_DeltaE = M_XYZ_DeltaE / len(R_Samples)
 M_XYZ_DeltaC = M_XYZ_DeltaC / len(R_Samples)
+M_XYZ_GFC = M_XYZ_GFC / len(R_Samples)
 
 print("mean RMS: ", M_XYZ_RMS)
 print("mean ΔE: ", M_XYZ_DeltaE)
 print("mean ΔC: ", M_XYZ_DeltaC)
+print("mean GFC: ", M_XYZ_GFC)
 print("Min RMS: ", M_XYZ_minRMS)
 print("Max RMS: ", M_XYZ_maxRMS)
 print("Min ΔE: ", M_XYZ_minE)
 print("Max ΔE: ", M_XYZ_maxE)
+print("Min ΔC: ", M_XYZ_minC)
+print("Max ΔC: ", M_XYZ_maxC)
+print("Min GFC: ", M_XYZ_minGFC)
+print("Max GFC: ", M_XYZ_maxGFC)
 
 
 # # Showing Results
@@ -560,38 +627,59 @@ x.field_names = [
     "Mean RMS",
     "Mean ΔE",
     "Mean ΔC",
+    "Mean GFC",
     "Min RMS",
     "Max RMS",
     "Min ΔE",
     "Max ΔE",
+    "Min ΔC",
+    "Max ΔC",
+    "Min GFC",
+    "Max GFC",
 ]
 
-M_R_RMS = round(M_R_RMS, 5)
-M_R_DeltaE = round(M_R_DeltaE, 5)
-M_R_DeltaC = round(M_R_DeltaC, 5)
-M_R_minRMS = round(M_R_minRMS, 5)
-M_R_maxRMS = round(M_R_maxRMS, 5)
-M_R_minE = round(M_R_minE, 5)
-M_R_maxE = round(M_R_maxE, 5)
+pr = 5
+M_R_RMS = round(M_R_RMS, pr)
+M_R_DeltaE = round(M_R_DeltaE, pr)
+M_R_DeltaC = round(M_R_DeltaC, pr)
+M_R_GFC = round(M_R_GFC, pr)
+M_R_minRMS = round(M_R_minRMS, pr)
+M_R_maxRMS = round(M_R_maxRMS, pr)
+M_R_minE = round(M_R_minE, pr)
+M_R_maxE = round(M_R_maxE, pr)
+M_R_minC = round(M_R_minC, pr)
+M_R_maxC = round(M_R_maxC, pr)
+M_R_minGFC = round(M_R_minGFC, pr)
+M_R_maxGFC = round(M_R_maxGFC, pr)
 
-M_XYZ_RMS = round(M_XYZ_RMS, 5)
-M_XYZ_DeltaE = round(M_XYZ_DeltaE, 5)
-M_XYZ_DeltaC = round(M_XYZ_DeltaC, 5)
-M_XYZ_minRMS = round(M_XYZ_minRMS, 5)
-M_XYZ_maxRMS = round(M_XYZ_maxRMS, 5)
-M_XYZ_minE = round(M_XYZ_minE, 5)
-M_XYZ_maxE = round(M_XYZ_maxE, 5)
+M_XYZ_RMS = round(M_XYZ_RMS, pr)
+M_XYZ_DeltaE = round(M_XYZ_DeltaE, pr)
+M_XYZ_DeltaC = round(M_XYZ_DeltaC, pr)
+M_XYZ_GFC = round(M_XYZ_GFC, pr)
+M_XYZ_minRMS = round(M_XYZ_minRMS, pr)
+M_XYZ_maxRMS = round(M_XYZ_maxRMS, pr)
+M_XYZ_minE = round(M_XYZ_minE, pr)
+M_XYZ_maxE = round(M_XYZ_maxE, pr)
+M_XYZ_minC = round(M_XYZ_minC, pr)
+M_XYZ_maxC = round(M_XYZ_maxC, pr)
+M_XYZ_minGFC = round(M_XYZ_minGFC, pr)
+M_XYZ_maxGFC = round(M_XYZ_maxGFC, pr)
 
 x.add_row(
     [
-        "Principal Component Coordinates",
+        "PCC",
         M_R_RMS,
         M_R_DeltaE,
         M_R_DeltaC,
+        M_R_GFC,
         M_R_minRMS,
         M_R_maxRMS,
         M_R_minE,
         M_R_maxE,
+        M_R_minC,
+        M_R_maxC,
+        M_R_minGFC,
+        M_R_maxGFC,
     ]
 )
 
@@ -601,10 +689,15 @@ x.add_row(
         M_XYZ_RMS,
         M_XYZ_DeltaE,
         M_XYZ_DeltaC,
+        M_XYZ_GFC,
         M_XYZ_minRMS,
         M_XYZ_maxRMS,
         M_XYZ_minE,
         M_XYZ_maxE,
+        M_XYZ_minC,
+        M_XYZ_maxC,
+        M_XYZ_minGFC,
+        M_XYZ_maxGFC,
     ]
 )
 

@@ -173,6 +173,14 @@ class Compare:
             ]
         )
 
+    def GFC(object):
+        R = mm.D1(object.mat1.R)
+        Rhat = mm.D1(object.mat2.R)
+        GFC = np.inner(R.T, Rhat.T) / (
+            ((sum(R.T ** 2)) ** (0.5)) * (sum(Rhat.T ** 2)) ** (0.5)
+        )
+        return GFC
+
 
 class Mixture:
     def __init__(object, r_sub):
@@ -232,19 +240,6 @@ class MyDelaunay:
         result = Variables.T.dot(obj.getSource(source))
 
         return result
-
-
-def GFC(R, Rhat):
-    # R[31,1269]
-    Rhat = mm.D2(Rhat)
-    GFC = []
-    for i in range(0, len(R)):
-        GFC.append(
-            np.inner(R.T[:, i], Rhat.T[:, i])
-            / (((sum(R.T[:, i] ** 2)) ** (0.5)) * (sum(Rhat.T[:, i] ** 2)) ** (0.5))
-        )
-    GFC_MEAN = sum(GFC) / 1269
-    return GFC_MEAN
 
 
 """
