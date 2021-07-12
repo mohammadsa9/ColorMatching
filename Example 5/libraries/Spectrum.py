@@ -119,6 +119,12 @@ class Observation:
         Z = object.getZ()
         return [X / (X + Y + Z), Y / (X + Y + Z)]
 
+    def getXYZ(object):
+        X = object.getX()
+        Y = object.getY()
+        Z = object.getZ()
+        return np.array([X, Y, Z])
+
     def getL(object):
         return 116 * object.f(object.getY() / object.light.getY()) - 16
 

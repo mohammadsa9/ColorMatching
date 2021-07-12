@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from colour.plotting import *
+import colour
 
 
 def autolabel(rects, ax, xpos="center", p=6):
@@ -87,3 +88,8 @@ def draw_CIE1931_style2(arr=[]):
     render(
         standalone=True, limits=(-0.1, 0.9, -0.1, 0.9), x_tighten=True, y_tighten=True
     )
+
+
+def draw_rgb_from_XYZ(XYZ, name=""):
+    RGB = colour.XYZ_to_sRGB(XYZ / 100)
+    plot_single_colour_swatch(ColourSwatch(name, RGB), text_kwargs={"size": "x-large"})

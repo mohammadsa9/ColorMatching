@@ -207,6 +207,10 @@ OBS4 = Observation(light_source, viewer, YYY.getR(), "Yellow Dye")
 color_points = [OBS1, OBS2, OBS3, OBS4]
 draw_CIE1931(color_points)
 
+draw_rgb_from_XYZ(OBS2.getXYZ(), "Blue Dye")
+draw_rgb_from_XYZ(OBS3.getXYZ(), "Red Dye")
+draw_rgb_from_XYZ(OBS4.getXYZ(), "Yellow Dye")
+
 
 # # SET R Substrate for New Surface = 1
 
@@ -343,9 +347,13 @@ all_pointes = []
 for i in R_Lookup:
     OBS_new = Observation(light_source, viewer, i, "", "green")
     all_pointes.append(OBS_new)
+
+count = 1
 for i in R_Samples:
     OBS_new = Observation(light_source, viewer, i, "", "blue")
     all_pointes.append(OBS_new)
+    draw_rgb_from_XYZ(OBS_new.getXYZ(), "Sample " + str(count))
+    count = count + 1
 
 # Blue
 OBS_new = Observation(light_source, viewer, BBB.getR(), "Blue Dye", "black")
