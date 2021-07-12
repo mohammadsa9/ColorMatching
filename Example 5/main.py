@@ -35,6 +35,9 @@ import libraries.MyMath as mm
 # In[3]:
 
 
+# OUT PUT MODE => 0 = Terminal Output, 1 = File Output
+OUTPUT = 0
+
 start_wave = 400
 end_wave = 700
 data_size = 31
@@ -229,6 +232,8 @@ Mix = Mixture(R_sub)
 for x in range(pr):
     for y in range(pr):
         for z in range(pr):
+            if (Dis1[x] + Dis2[y] + Dis3[z]) > 1.5:
+                continue
             Mix.clear()
             Mix.add(Dis1[x], blue_KOVERS)
             Mix.add(Dis2[y], red_KOVERS)
@@ -244,6 +249,7 @@ C_Lookup = np.array(C_Lookup)
 
 look = PrettyTable()
 look.field_names = [
+    "No",
     "R",
     "PCC",
     "XYZ",
@@ -252,9 +258,14 @@ look.field_names = [
 
 dim = 3
 for i in range(len(R_Lookup)):
+    R_Temp = "..."
+    if OUTPUT == 1:
+        R_Temp = R_Lookup[i]
+
     look.add_row(
         [
-            "...",
+            i + 1,
+            R_Temp,
             mm.PC(R_Lookup[i], dim, eigenVectors, R_mean),
             XYZ_Lookup[i],
             C_Lookup[i],
@@ -262,7 +273,6 @@ for i in range(len(R_Lookup)):
     )
 
 print(look)
-
 print()
 print(Dis1)
 
@@ -272,10 +282,10 @@ print(Dis1)
 # In[8]:
 
 
-pr = 4
-Dis1 = np.array([0.25, 0.45, 0.65, 0.85])
-Dis2 = np.array([0.25, 0.45, 0.65, 0.85])
-Dis3 = np.array([0.25, 0.45, 0.65, 0.85])
+pr = 5
+Dis1 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
+Dis2 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
+Dis3 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
 
 R_Samples = []
 XYZ_Samples = []
@@ -285,6 +295,8 @@ Mix = Mixture(R_sub)
 for x in range(pr):
     for y in range(pr):
         for z in range(pr):
+            if (Dis1[x] + Dis2[y] + Dis3[z]) > 1.5:
+                continue
             Mix.clear()
             Mix.add(Dis1[x], blue_KOVERS)
             Mix.add(Dis2[y], red_KOVERS)
@@ -293,6 +305,10 @@ for x in range(pr):
             XYZ_Samples.append([Temp.getX(), Temp.getY(), Temp.getZ()])
             C_Samples.append([Dis1[x], Dis2[y], Dis3[z]])
             R_Samples.append(Mix.getR().T[0])
+
+R_Samples = np.array(R_Samples)
+XYZ_Samples = np.array(XYZ_Samples)
+C_Samples = np.array(C_Samples)
 
 count = 1
 for R_Sample in R_Samples:
@@ -329,6 +345,33 @@ all_pointes.append(OBS_new)
 
 draw_CIE1931(all_pointes)
 
+samp = PrettyTable()
+samp.field_names = [
+    "No",
+    "R",
+    "PCC",
+    "XYZ",
+    "C Blue Red Yellow",
+]
+
+dim = 3
+for i in range(len(R_Samples)):
+    R_Temp = "..."
+    if OUTPUT == 1:
+        R_Temp = R_Samples[i]
+
+    samp.add_row(
+        [
+            i + 1,
+            R_Temp,
+            mm.PC(R_Samples[i], dim, eigenVectors, R_mean),
+            XYZ_Samples[i],
+            C_Samples[i],
+        ]
+    )
+
+print(samp)
+print()
 print(Dis1)
 
 
