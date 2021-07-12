@@ -16,7 +16,9 @@ from scipy.spatial import Delaunay
 from pyhull.delaunay import DelaunayTri
 
 from tabulate import tabulate
-from prettytable import PrettyTable
+
+# from prettytable import PrettyTable => using texttable instead
+import texttable
 
 
 # # My Libraries
@@ -28,6 +30,7 @@ from prettytable import PrettyTable
 from libraries.Spectrum import *
 from libraries.MyPlot import *
 import libraries.MyMath as mm
+import libraries.MyOutput as output
 
 
 # # Initial Data
@@ -247,22 +250,32 @@ R_Lookup = np.array(R_Lookup)
 XYZ_Lookup = np.array(XYZ_Lookup)
 C_Lookup = np.array(C_Lookup)
 
-look = PrettyTable()
-look.field_names = [
-    "No",
-    "R",
-    "PCC",
-    "XYZ",
-    "C Blue Red Yellow",
-]
+look_table = 0
+if OUTPUT == 1:
+    look_table = texttable.Texttable(0)
+else:
+    look_table = texttable.Texttable(100)
+
+look_table.set_cols_dtype(["t", "t", "t", "t", "t"])
+look_table.set_cols_align(["c", "c", "c", "c", "c"])
+look_table.set_cols_valign(["m", "m", "m", "m", "m"])
+look_table.add_row(
+    [
+        "No",
+        "R",
+        "PCC",
+        "XYZ",
+        "C Blue Red Yellow",
+    ]
+)
 
 dim = 3
 for i in range(len(R_Lookup)):
     R_Temp = "..."
     if OUTPUT == 1:
-        R_Temp = R_Lookup[i]
+        R_Temp = "...."
 
-    look.add_row(
+    look_table.add_row(
         [
             i + 1,
             R_Temp,
@@ -272,7 +285,11 @@ for i in range(len(R_Lookup)):
         ]
     )
 
-print(look)
+if OUTPUT == 1:
+    output.saveCSV(look_table.draw(), "Lookup_table.csv")
+else:
+    print(look_table.draw())
+
 print()
 print(Dis1)
 
@@ -345,22 +362,32 @@ all_pointes.append(OBS_new)
 
 draw_CIE1931(all_pointes)
 
-samp = PrettyTable()
-samp.field_names = [
-    "No",
-    "R",
-    "PCC",
-    "XYZ",
-    "C Blue Red Yellow",
-]
+samples_table = 0
+if OUTPUT == 1:
+    samples_table = texttable.Texttable(0)
+else:
+    samples_table = texttable.Texttable(100)
+
+samples_table.set_cols_dtype(["t", "t", "t", "t", "t"])
+samples_table.set_cols_align(["c", "c", "c", "c", "c"])
+samples_table.set_cols_valign(["m", "m", "m", "m", "m"])
+samples_table.add_row(
+    [
+        "No",
+        "R",
+        "PCC",
+        "XYZ",
+        "C Blue Red Yellow",
+    ]
+)
 
 dim = 3
 for i in range(len(R_Samples)):
     R_Temp = "..."
     if OUTPUT == 1:
-        R_Temp = R_Samples[i]
+        R_Temp = "...."
 
-    samp.add_row(
+    samples_table.add_row(
         [
             i + 1,
             R_Temp,
@@ -370,7 +397,11 @@ for i in range(len(R_Samples)):
         ]
     )
 
-print(samp)
+if OUTPUT == 1:
+    output.saveCSV(samples_table.draw(), "Samples_table.csv")
+else:
+    print(samples_table.draw())
+
 print()
 print(Dis1)
 
@@ -663,24 +694,6 @@ print("Max GFC: ", M_XYZ_maxGFC)
 # In[11]:
 
 
-x = PrettyTable()
-
-x.field_names = [
-    "Method name",
-    "Mean RMS",
-    "Mean ΔE",
-    "Mean ΔC",
-    "Mean GFC",
-    "Min RMS",
-    "Max RMS",
-    "Min ΔE",
-    "Max ΔE",
-    "Min ΔC",
-    "Max ΔC",
-    "Min GFC",
-    "Max GFC",
-]
-
 pr = 5
 M_R_RMS = round(M_R_RMS, pr)
 M_R_DeltaE = round(M_R_DeltaE, pr)
@@ -708,9 +721,43 @@ M_XYZ_maxC = round(M_XYZ_maxC, pr)
 M_XYZ_minGFC = round(M_XYZ_minGFC, pr)
 M_XYZ_maxGFC = round(M_XYZ_maxGFC, pr)
 
-x.add_row(
+
+tableObj = 0
+if OUTPUT == 1:
+    tableObj = texttable.Texttable(0)
+else:
+    tableObj = texttable.Texttable(100)
+
+tableObj.set_cols_dtype(
+    ["t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t"]
+)
+tableObj.set_cols_align(
+    ["c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c"]
+)
+tableObj.set_cols_valign(
+    ["m", "m", "m", "m", "m", "m", "m", "m", "m", "m", "m", "m", "m"]
+)
+tableObj.add_row(
     [
-        "PCC",
+        "Method name",
+        "Mean RMS",
+        "Mean ΔE",
+        "Mean ΔC",
+        "Mean GFC",
+        "Min RMS",
+        "Max RMS",
+        "Min ΔE",
+        "Max ΔE",
+        "Min ΔC",
+        "Max ΔC",
+        "Min GFC",
+        "Max GFC",
+    ]
+)
+
+tableObj.add_row(
+    [
+        "Principal Component Coordinates",
         M_R_RMS,
         M_R_DeltaE,
         M_R_DeltaC,
@@ -726,7 +773,7 @@ x.add_row(
     ]
 )
 
-x.add_row(
+tableObj.add_row(
     [
         "XYZ",
         M_XYZ_RMS,
@@ -744,7 +791,13 @@ x.add_row(
     ]
 )
 
-print(x)
+
+if OUTPUT == 1:
+    output.saveCSV(tableObj.draw(), "Result.csv")
+else:
+    print(tableObj.draw())
+
+print("Finished!")
 
 
 # In[ ]:
