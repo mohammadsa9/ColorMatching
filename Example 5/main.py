@@ -41,6 +41,9 @@ import libraries.MyOutput as output
 # OUT PUT MODE => 0 = Terminal Output, 1 = File Output
 OUTPUT = 0
 
+if OUTPUT:
+    makeout()
+
 start_wave = 400
 end_wave = 700
 data_size = 31
@@ -210,6 +213,8 @@ draw_CIE1931(color_points)
 draw_rgb_from_XYZ(OBS2.getXYZ(), "Blue Dye")
 draw_rgb_from_XYZ(OBS3.getXYZ(), "Red Dye")
 draw_rgb_from_XYZ(OBS4.getXYZ(), "Yellow Dye")
+draw_rgb_from_all()
+resetSwatch()
 
 
 # # SET R Substrate for New Surface = 1
@@ -249,6 +254,12 @@ for x in range(pr):
             XYZ_Lookup.append([Temp.getX(), Temp.getY(), Temp.getZ()])
             C_Lookup.append([Dis1[x], Dis2[y], Dis3[z]])
             R_Lookup.append(Mix.getR().T[0])
+            draw_rgb_from_XYZ(
+                np.array([Temp.getX(), Temp.getY(), Temp.getZ()]), "", False
+            )
+
+draw_rgb_from_all()
+resetSwatch()
 
 R_Lookup = np.array(R_Lookup)
 XYZ_Lookup = np.array(XYZ_Lookup)
@@ -354,6 +365,9 @@ for i in R_Samples:
     all_pointes.append(OBS_new)
     draw_rgb_from_XYZ(OBS_new.getXYZ(), "Sample " + str(count))
     count = count + 1
+
+draw_rgb_from_all()
+resetSwatch()
 
 # Blue
 OBS_new = Observation(light_source, viewer, BBB.getR(), "Blue Dye", "black")
