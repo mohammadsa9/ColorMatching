@@ -43,6 +43,7 @@ def draw_R_style1(lines, comment=""):
     plt.ylabel("R")
     plt.gcf().set_size_inches(8, 8)
     plt.ylim(0, 1)
+    plt.xlim(400, 700)
     global OUTPUT, Name
     if OUTPUT:
         plt.savefig("output_img/" + str(Name) + ".jpg", bbox_inches="tight")
@@ -55,6 +56,7 @@ def draw_KoverS_style1(lines):
     plt.gcf().canvas.set_window_title("Comparison")
     plt.xlabel("Wave Length")
     plt.ylabel("K/S")
+    plt.xlim(400, 700)
     plt.gcf().set_size_inches(8, 8)
     global OUTPUT, Name
     if OUTPUT:

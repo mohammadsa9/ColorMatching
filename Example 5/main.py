@@ -235,10 +235,12 @@ Dis1 = np.linspace(0, 1, pr)
 Dis2 = np.linspace(0, 1, pr)
 Dis3 = np.linspace(0, 1, pr)
 
+dim = 3
 
 R_Lookup = []
 XYZ_Lookup = []
 C_Lookup = []
+PCC_Lookup = []
 
 Mix = Mixture(R_sub)
 for x in range(pr):
@@ -254,9 +256,15 @@ for x in range(pr):
             XYZ_Lookup.append([Temp.getX(), Temp.getY(), Temp.getZ()])
             C_Lookup.append([Dis1[x], Dis2[y], Dis3[z]])
             R_Lookup.append(Mix.getR().T[0])
-            draw_rgb_from_XYZ(
-                np.array([Temp.getX(), Temp.getY(), Temp.getZ()]), "", False
-            )
+            PCC_Lookup.append(mm.PC(Mix.getR().T[0], dim, eigenVectors, R_mean))
+
+for i in range(len(R_Lookup)):
+    (p1,) = plt.plot(wave_length, R_Lookup[i], color="green", label="R Lookup")
+    lines = [p1]
+    OBS_new = Observation(light_source, viewer, R_Lookup[i], "", "green")
+    draw_rgb_from_XYZ(OBS_new.getXYZ(), " ", False)
+
+draw_R_style1(lines)
 
 draw_rgb_from_all()
 resetSwatch()
@@ -264,6 +272,7 @@ resetSwatch()
 R_Lookup = np.array(R_Lookup)
 XYZ_Lookup = np.array(XYZ_Lookup)
 C_Lookup = np.array(C_Lookup)
+PCC_Lookup = np.array(PCC_Lookup)
 
 look_table = 0
 if OUTPUT == 1:
@@ -284,7 +293,6 @@ look_table.add_row(
     ]
 )
 
-dim = 3
 for i in range(len(R_Lookup)):
     R_Temp = "..."
     if OUTPUT == 1:
@@ -294,7 +302,7 @@ for i in range(len(R_Lookup)):
         [
             i + 1,
             R_Temp,
-            mm.PC(R_Lookup[i], dim, eigenVectors, R_mean),
+            PCC_Lookup[i],
             XYZ_Lookup[i],
             C_Lookup[i],
         ]
@@ -322,6 +330,7 @@ Dis3 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
 R_Samples = []
 XYZ_Samples = []
 C_Samples = []
+PCC_Samples = []
 
 Mix = Mixture(R_sub)
 for x in range(pr):
@@ -337,21 +346,13 @@ for x in range(pr):
             XYZ_Samples.append([Temp.getX(), Temp.getY(), Temp.getZ()])
             C_Samples.append([Dis1[x], Dis2[y], Dis3[z]])
             R_Samples.append(Mix.getR().T[0])
+            PCC_Samples.append(mm.PC(Mix.getR().T[0], dim, eigenVectors, R_mean))
 
 R_Samples = np.array(R_Samples)
 XYZ_Samples = np.array(XYZ_Samples)
 C_Samples = np.array(C_Samples)
+PCC_Samples = np.array(PCC_Samples)
 
-count = 1
-for R_Sample in R_Samples:
-    (p1,) = plt.plot(
-        wave_length, R_Sample, color="green", label="R Sample " + str(count)
-    )
-    lines = [p1]
-    count = count + 1
-    # print("GFC: ",GFC(munsell_R,R_Sample))
-
-draw_R_style1(lines)
 
 all_pointes = []
 
@@ -359,12 +360,14 @@ for i in R_Lookup:
     OBS_new = Observation(light_source, viewer, i, "", "green")
     all_pointes.append(OBS_new)
 
-count = 1
-for i in R_Samples:
-    OBS_new = Observation(light_source, viewer, i, "", "blue")
+for i in range(len(R_Samples)):
+    (p1,) = plt.plot(wave_length, R_Samples[i], color="green", label="R Samples")
+    lines = [p1]
+    OBS_new = Observation(light_source, viewer, R_Samples[i], "", "blue")
     all_pointes.append(OBS_new)
-    draw_rgb_from_XYZ(OBS_new.getXYZ(), "Sample " + str(count))
-    count = count + 1
+    draw_rgb_from_XYZ(OBS_new.getXYZ(), "Sample " + str(i), False)
+
+draw_R_style1(lines)
 
 draw_rgb_from_all()
 resetSwatch()
@@ -403,7 +406,6 @@ samples_table.add_row(
     ]
 )
 
-dim = 3
 for i in range(len(R_Samples)):
     R_Temp = "..."
     if OUTPUT == 1:
@@ -413,8 +415,8 @@ for i in range(len(R_Samples)):
         [
             i + 1,
             R_Temp,
-            mm.PC(R_Samples[i], dim, eigenVectors, R_mean),
             XYZ_Samples[i],
+            PCC_Samples[i],
             C_Samples[i],
         ]
     )
@@ -433,7 +435,6 @@ print(Dis1)
 # In[9]:
 
 
-dim = 3
 R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors, R_mean)
 R_calc = MyDelaunay(R_Lookup)
 
@@ -465,8 +466,7 @@ M_R_maxGFC = 0
 for i in range(len(R_Samples)):
     # print(R_Samples[i])
     R_std = R_Samples[i]
-    R_Find = R_Samples[i]
-    R_Find = mm.PC(R_Find, dim, eigenVectors, R_mean)
+    R_Find = PCC_Samples[i]
 
     res = R_calc.getResult(R_Find, C_Lookup)
     C_Inter = res[0]
