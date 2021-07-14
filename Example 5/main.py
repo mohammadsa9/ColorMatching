@@ -17,9 +17,6 @@ from pyhull.delaunay import DelaunayTri
 
 from tabulate import tabulate
 
-# from prettytable import PrettyTable => using texttable instead
-import texttable
-
 
 # # My Libraries
 # 
@@ -43,6 +40,7 @@ OUTPUT = 0
 
 if OUTPUT:
     makeout()
+    output.makeout()
 
 start_wave = 400
 end_wave = 700
@@ -274,16 +272,8 @@ XYZ_Lookup = np.array(XYZ_Lookup)
 C_Lookup = np.array(C_Lookup)
 PCC_Lookup = np.array(PCC_Lookup)
 
-look_table = 0
-if OUTPUT == 1:
-    look_table = texttable.Texttable(0)
-else:
-    look_table = texttable.Texttable(100)
-
-look_table.set_cols_dtype(["t", "t", "t", "t", "t"])
-look_table.set_cols_align(["c", "c", "c", "c", "c"])
-look_table.set_cols_valign(["m", "m", "m", "m", "m"])
-look_table.add_row(
+Table = []
+Table.append(
     [
         "No",
         "R",
@@ -296,9 +286,9 @@ look_table.add_row(
 for i in range(len(R_Lookup)):
     R_Temp = "..."
     if OUTPUT == 1:
-        R_Temp = "...."
+        R_Temp = np.round(R_Lookup[i], 3)
 
-    look_table.add_row(
+    Table.append(
         [
             i + 1,
             R_Temp,
@@ -308,11 +298,7 @@ for i in range(len(R_Lookup)):
         ]
     )
 
-if OUTPUT == 1:
-    output.saveCSV(look_table.draw(), "Lookup_table.csv")
-else:
-    print(look_table.draw())
-
+output.save(Table, "Lookup_table")
 print()
 print(Dis1)
 
@@ -387,16 +373,8 @@ all_pointes.append(OBS_new)
 
 draw_CIE1931(all_pointes)
 
-samples_table = 0
-if OUTPUT == 1:
-    samples_table = texttable.Texttable(0)
-else:
-    samples_table = texttable.Texttable(100)
-
-samples_table.set_cols_dtype(["t", "t", "t", "t", "t"])
-samples_table.set_cols_align(["c", "c", "c", "c", "c"])
-samples_table.set_cols_valign(["m", "m", "m", "m", "m"])
-samples_table.add_row(
+Table = []
+Table.append(
     [
         "No",
         "R",
@@ -409,9 +387,9 @@ samples_table.add_row(
 for i in range(len(R_Samples)):
     R_Temp = "..."
     if OUTPUT == 1:
-        R_Temp = "...."
+        R_Temp = np.round(R_Samples[i], 3)
 
-    samples_table.add_row(
+    Table.append(
         [
             i + 1,
             R_Temp,
@@ -421,11 +399,7 @@ for i in range(len(R_Samples)):
         ]
     )
 
-if OUTPUT == 1:
-    output.saveCSV(samples_table.draw(), "Samples_table.csv")
-else:
-    print(samples_table.draw())
-
+output.save(Table, "Samples_table")
 print()
 print(Dis1)
 
@@ -744,22 +718,8 @@ M_XYZ_minGFC = round(M_XYZ_minGFC, pr)
 M_XYZ_maxGFC = round(M_XYZ_maxGFC, pr)
 
 
-tableObj = 0
-if OUTPUT == 1:
-    tableObj = texttable.Texttable(0)
-else:
-    tableObj = texttable.Texttable(100)
-
-tableObj.set_cols_dtype(
-    ["t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t"]
-)
-tableObj.set_cols_align(
-    ["c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c"]
-)
-tableObj.set_cols_valign(
-    ["m", "m", "m", "m", "m", "m", "m", "m", "m", "m", "m", "m", "m"]
-)
-tableObj.add_row(
+Table = []
+Table.append(
     [
         "Method name",
         "Mean RMS",
@@ -777,7 +737,7 @@ tableObj.add_row(
     ]
 )
 
-tableObj.add_row(
+Table.append(
     [
         "Principal Component Coordinates",
         M_R_RMS,
@@ -795,7 +755,7 @@ tableObj.add_row(
     ]
 )
 
-tableObj.add_row(
+Table.append(
     [
         "XYZ",
         M_XYZ_RMS,
@@ -813,12 +773,7 @@ tableObj.add_row(
     ]
 )
 
-
-if OUTPUT == 1:
-    output.saveCSV(tableObj.draw(), "Result.csv")
-else:
-    print(tableObj.draw())
-
+output.save(Table, "Result")
 print("Finished!")
 
 

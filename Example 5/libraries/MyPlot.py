@@ -9,7 +9,7 @@ Swatch = []
 
 
 def makeout():
-    global OUTPUT
+    global OUTPUT, Name
     OUTPUT = 1
     Name = 1
 
