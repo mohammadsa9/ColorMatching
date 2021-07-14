@@ -409,8 +409,8 @@ print(Dis1)
 # In[9]:
 
 
-R_Lookup = mm.array_PC(R_Lookup, dim, eigenVectors, R_mean)
-R_calc = MyDelaunay(R_Lookup)
+count = 0
+R_calc = MyDelaunay(PCC_Lookup)
 
 """ Another method to calculate with delaunay
     from scipy.interpolate import NearestNDInterpolator
@@ -442,7 +442,12 @@ for i in range(len(R_Samples)):
     R_std = R_Samples[i]
     R_Find = PCC_Samples[i]
 
-    res = R_calc.getResult(R_Find, C_Lookup)
+    try:
+        res = R_calc.getResult(R_Find, C_Lookup)
+    except Exception:
+        continue
+
+    count += 1
     C_Inter = res[0]
 
     Mix.clear()
@@ -487,7 +492,7 @@ for i in range(len(R_Samples)):
     M_R_DeltaC = M_R_DeltaC + DeltaC_Inter
     M_R_GFC = M_R_GFC + GFC_Inter
 
-    if i == 0:
+    if count == 1:
         M_R_minRMS = RMS_Inter
         M_R_maxRMS = RMS_Inter
 
@@ -530,11 +535,12 @@ for i in range(len(R_Samples)):
     draw_R_style1(lines, comment=text_all)
 
 # Result
-M_R_RMS = M_R_RMS / len(R_Samples)
-M_R_DeltaE = M_R_DeltaE / len(R_Samples)
-M_R_DeltaC = M_R_DeltaC / len(R_Samples)
-M_R_GFC = M_R_GFC / len(R_Samples)
+M_R_RMS = M_R_RMS / count
+M_R_DeltaE = M_R_DeltaE / count
+M_R_DeltaC = M_R_DeltaC / count
+M_R_GFC = M_R_GFC / count
 
+print(count)
 print("mean RMS: ", M_R_RMS)
 print("mean ΔE: ", M_R_DeltaE)
 print("mean ΔC: ", M_R_DeltaC)
@@ -554,6 +560,7 @@ print("Max GFC: ", M_R_maxGFC)
 # In[10]:
 
 
+count = 0
 XYZ_calc = MyDelaunay(XYZ_Lookup)
 
 # Result
@@ -580,7 +587,12 @@ for i in range(len(R_Samples)):
     Find = XYZ_Samples[i]
     Temp = Observation(light_source, viewer, R_std)
 
-    res = XYZ_calc.getResult(Find, C_Lookup)
+    try:
+        res = XYZ_calc.getResult(Find, C_Lookup)
+    except Exception:
+        continue
+
+    count += 1
     C_Inter = res[0]
 
     Mix.clear()
@@ -623,7 +635,7 @@ for i in range(len(R_Samples)):
     M_XYZ_DeltaC = M_XYZ_DeltaC + DeltaC_Inter
     M_XYZ_GFC = M_XYZ_GFC + GFC_Inter
 
-    if i == 0:
+    if count == 1:
         M_XYZ_minRMS = RMS_Inter
         M_XYZ_maxRMS = RMS_Inter
 
@@ -666,10 +678,10 @@ for i in range(len(R_Samples)):
     draw_R_style1(lines, comment=text_all)
 
 # Result
-M_XYZ_RMS = M_XYZ_RMS / len(R_Samples)
-M_XYZ_DeltaE = M_XYZ_DeltaE / len(R_Samples)
-M_XYZ_DeltaC = M_XYZ_DeltaC / len(R_Samples)
-M_XYZ_GFC = M_XYZ_GFC / len(R_Samples)
+M_XYZ_RMS = M_XYZ_RMS / count
+M_XYZ_DeltaE = M_XYZ_DeltaE / count
+M_XYZ_DeltaC = M_XYZ_DeltaC / count
+M_XYZ_GFC = M_XYZ_GFC / count
 
 print("mean RMS: ", M_XYZ_RMS)
 print("mean ΔE: ", M_XYZ_DeltaE)
