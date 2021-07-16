@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from colour.plotting import *
+from colour.plotting import override_style
+from colour.colorimetry import CCS_ILLUMINANTS
 import colour
 import math
 
@@ -65,20 +67,38 @@ def draw_KoverS_style1(lines):
     plt.show()
 
 
-def draw_CIE1931(arr=[]):
+def draw_CIE1931(arr=[], small_point=False):
     # Plotting the *CIE 1931 Chromaticity Diagram*.
-    plot_chromaticity_diagram_CIE1931(standalone=False)
+    settings = {
+        "standalone": False,
+        "wrap_title": False,
+        # "title": "CIE 1964 Chromaticity Diagram",
+        "transparent_background": False,
+    }
+    plot_chromaticity_diagram_CIE1931(
+        cmfs="CIE 1964 10 Degree Standard Observer", **settings
+    )
 
     for spec in arr:
         xy_D65 = spec.getxy()
         xy = xy_D65
         x, y = xy
-        plt.plot(x, y, "o-", color=spec.color)
+        text_x = -40
+        text_y = 30
+        if small_point:
+            plt.plot(x, y, ".", color=spec.color, markersize=1)
+        else:
+            plt.plot(x, y, "o-", color=spec.color)
         if spec.name != "":
+            if x < 0.3:
+                text_x = 0
+            elif x > 0.5:
+                text_x = -80
+                text_y = 20
             plt.annotate(
                 spec.name,
                 xy=xy,
-                xytext=(-50, 30),
+                xytext=(text_x, text_y),
                 textcoords="offset points",
                 arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
             )
@@ -88,34 +108,7 @@ def draw_CIE1931(arr=[]):
     )
     global OUTPUT, Name
     if OUTPUT:
-        fig.savefig("output_img/" + str(Name) + ".jpg", bbox_inches="tight")
-        Name += 1
-
-
-def draw_CIE1931_style2(arr=[]):
-    # Plotting the *CIE 1931 Chromaticity Diagram*.
-    plot_chromaticity_diagram_CIE1931(standalone=False)
-
-    for spec in arr:
-        xy_D65 = spec.getxy()
-        xy = xy_D65
-        x, y = xy
-        plt.plot(x, y, ".", color=spec.color, markersize=5)
-        if spec.name != "":
-            plt.annotate(
-                spec.name,
-                xy=xy,
-                xytext=(-50, 30),
-                textcoords="offset points",
-                arrowprops=dict(arrowstyle="->", connectionstyle="arc3, rad=-0.2"),
-            )
-    # Displaying the plot.
-    fig, ax = render(
-        standalone=True, limits=(-0.1, 0.9, -0.1, 0.9), x_tighten=True, y_tighten=True
-    )
-    global OUTPUT, Name
-    if OUTPUT:
-        fig.savefig("output_img/" + str(Name) + ".jpg", bbox_inches="tight")
+        fig.savefig("output_img/" + str(Name) + ".jpg", bbox_inches="tight", dpi=1200)
         Name += 1
 
 
@@ -126,7 +119,8 @@ def resetSwatch():
 
 def draw_rgb_from_XYZ(XYZ, name="", draw=True):
     global OUTPUT, Name, Swatch
-    RGB = colour.XYZ_to_sRGB(XYZ / 100)
+    illuminant = CCS_ILLUMINANTS["CIE 1964 10 Degree Standard Observer"]["D65"]
+    RGB = colour.XYZ_to_sRGB(XYZ / 100, illuminant=illuminant)
     Swatch.append(ColourSwatch("", RGB))
     if draw:
         fig, ax = plot_single_colour_swatch(
