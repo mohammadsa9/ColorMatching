@@ -198,29 +198,57 @@ print()
 
 # D65
 OBS1 = Observation(light_source, viewer, 1, "D65")
-# Blue
-OBS2 = Observation(light_source, viewer, BBB.getR(), "Blue Dye")
-# Red
-OBS3 = Observation(light_source, viewer, RRR.getR(), "Red Dye")
-# Yellow
-OBS4 = Observation(light_source, viewer, YYY.getR(), "Yellow Dye")
+Mix = Mixture(R_sub)
+
+# Blue 1
+Mix.clear()
+Mix.add(1, blue_KOVERS)
+OBS2 = Observation(light_source, viewer, Mix.getR(), "Blue Dye")
+# Red 1
+Mix.clear()
+Mix.add(1, red_KOVERS)
+OBS3 = Observation(light_source, viewer, Mix.getR(), "Red Dye")
+# Yellow 1
+Mix.clear()
+Mix.add(1, yellow_KOVERS)
+OBS4 = Observation(light_source, viewer, Mix.getR(), "Yellow Dye")
+
+# Blue 0.05
+Mix.clear()
+Mix.add(0.05, blue_KOVERS)
+OBS5 = Observation(light_source, viewer, Mix.getR(), "Blue Dye")
+# Red 0.05
+Mix.clear()
+Mix.add(0.05, red_KOVERS)
+OBS6 = Observation(light_source, viewer, Mix.getR(), "Red Dye")
+# Yellow 0.05
+Mix.clear()
+Mix.add(0.05, yellow_KOVERS)
+OBS7 = Observation(light_source, viewer, Mix.getR(), "Yellow Dye")
 
 color_points = [OBS1, OBS2, OBS3, OBS4]
 draw_CIE1931(color_points)
 
-draw_rgb_from_XYZ(OBS2.getXYZ(), "Blue Dye")
-draw_rgb_from_XYZ(OBS3.getXYZ(), "Red Dye")
-draw_rgb_from_XYZ(OBS4.getXYZ(), "Yellow Dye")
+draw_rgb_from_XYZ(OBS2.getXYZ(), "Blue Dye", False)
+draw_rgb_from_XYZ(OBS5.getXYZ(), "Blue Dye", False)
+
+draw_rgb_from_XYZ(OBS3.getXYZ(), "Red Dye", False)
+draw_rgb_from_XYZ(OBS6.getXYZ(), "Red Dye", False)
+
+draw_rgb_from_XYZ(OBS4.getXYZ(), "Yellow Dye", False)
+draw_rgb_from_XYZ(OBS7.getXYZ(), "Yellow Dye", False)
+
 draw_rgb_from_all()
 resetSwatch()
 
 
-# # SET R Substrate for New Surface = 1
+# # Same R Substrate for New Surface
 
 # In[6]:
 
 
-R_sub = np.array([mm.array_repeat(1, data_size)]).T
+R_sub = R_sub
+# R_sub = np.array([mm.array_repeat(1, data_size)]).T
 
 
 # # Creating Look up Table
@@ -228,10 +256,10 @@ R_sub = np.array([mm.array_repeat(1, data_size)]).T
 # In[7]:
 
 
-pr = 11
-Dis1 = np.linspace(0, 1, pr)
-Dis2 = np.linspace(0, 1, pr)
-Dis3 = np.linspace(0, 1, pr)
+Dis1 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
+Dis2 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
+Dis3 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
+pr = len(Dis1)
 
 dim = 3
 
@@ -308,10 +336,10 @@ print(Dis1)
 # In[8]:
 
 
-pr = 5
-Dis1 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
-Dis2 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
-Dis3 = np.array([0.15, 0.35, 0.55, 0.75, 0.95])
+Dis1 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
+Dis2 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
+Dis3 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
+pr = len(Dis1)
 
 R_Samples = []
 XYZ_Samples = []
@@ -322,7 +350,9 @@ Mix = Mixture(R_sub)
 for x in range(pr):
     for y in range(pr):
         for z in range(pr):
-            if (Dis1[x] + Dis2[y] + Dis3[z]) > 1.5:
+            if (Dis1[x] + Dis2[y] + Dis3[z]) > 1.5 or (
+                Dis1[x] + Dis2[y] + Dis3[z]
+            ) == 0:
                 continue
             Mix.clear()
             Mix.add(Dis1[x], blue_KOVERS)
@@ -400,6 +430,7 @@ for i in range(len(R_Samples)):
     )
 
 output.save(Table, "Samples_table")
+total_count = len(R_Samples)
 print()
 print(Dis1)
 
@@ -409,7 +440,7 @@ print(Dis1)
 # In[9]:
 
 
-count = 0
+count1 = 0
 R_calc = MyDelaunay(PCC_Lookup)
 
 """ Another method to calculate with delaunay
@@ -438,7 +469,6 @@ M_R_minGFC = 0
 M_R_maxGFC = 0
 
 for i in range(len(R_Samples)):
-    # print(R_Samples[i])
     R_std = R_Samples[i]
     R_Find = PCC_Samples[i]
 
@@ -447,7 +477,7 @@ for i in range(len(R_Samples)):
     except Exception:
         continue
 
-    count += 1
+    count1 += 1
     C_Inter = res[0]
 
     Mix.clear()
@@ -492,7 +522,7 @@ for i in range(len(R_Samples)):
     M_R_DeltaC = M_R_DeltaC + DeltaC_Inter
     M_R_GFC = M_R_GFC + GFC_Inter
 
-    if count == 1:
+    if count1 == 1:
         M_R_minRMS = RMS_Inter
         M_R_maxRMS = RMS_Inter
 
@@ -535,12 +565,11 @@ for i in range(len(R_Samples)):
     draw_R_style1(lines, comment=text_all)
 
 # Result
-M_R_RMS = M_R_RMS / count
-M_R_DeltaE = M_R_DeltaE / count
-M_R_DeltaC = M_R_DeltaC / count
-M_R_GFC = M_R_GFC / count
+M_R_RMS = M_R_RMS / count1
+M_R_DeltaE = M_R_DeltaE / count1
+M_R_DeltaC = M_R_DeltaC / count1
+M_R_GFC = M_R_GFC / count1
 
-print(count)
 print("mean RMS: ", M_R_RMS)
 print("mean ΔE: ", M_R_DeltaE)
 print("mean ΔC: ", M_R_DeltaC)
@@ -560,7 +589,7 @@ print("Max GFC: ", M_R_maxGFC)
 # In[10]:
 
 
-count = 0
+count2 = 0
 XYZ_calc = MyDelaunay(XYZ_Lookup)
 
 # Result
@@ -592,7 +621,7 @@ for i in range(len(R_Samples)):
     except Exception:
         continue
 
-    count += 1
+    count2 += 1
     C_Inter = res[0]
 
     Mix.clear()
@@ -635,7 +664,7 @@ for i in range(len(R_Samples)):
     M_XYZ_DeltaC = M_XYZ_DeltaC + DeltaC_Inter
     M_XYZ_GFC = M_XYZ_GFC + GFC_Inter
 
-    if count == 1:
+    if count2 == 1:
         M_XYZ_minRMS = RMS_Inter
         M_XYZ_maxRMS = RMS_Inter
 
@@ -678,10 +707,10 @@ for i in range(len(R_Samples)):
     draw_R_style1(lines, comment=text_all)
 
 # Result
-M_XYZ_RMS = M_XYZ_RMS / count
-M_XYZ_DeltaE = M_XYZ_DeltaE / count
-M_XYZ_DeltaC = M_XYZ_DeltaC / count
-M_XYZ_GFC = M_XYZ_GFC / count
+M_XYZ_RMS = M_XYZ_RMS / count2
+M_XYZ_DeltaE = M_XYZ_DeltaE / count2
+M_XYZ_DeltaC = M_XYZ_DeltaC / count2
+M_XYZ_GFC = M_XYZ_GFC / count2
 
 print("mean RMS: ", M_XYZ_RMS)
 print("mean ΔE: ", M_XYZ_DeltaE)
@@ -734,6 +763,9 @@ Table = []
 Table.append(
     [
         "Method name",
+        "Dimension",
+        "Total",
+        "in-gamut",
         "Mean RMS",
         "Mean ΔE",
         "Mean ΔC",
@@ -752,6 +784,9 @@ Table.append(
 Table.append(
     [
         "Principal Component Coordinates",
+        dim,
+        total_count,
+        count1,
         M_R_RMS,
         M_R_DeltaE,
         M_R_DeltaC,
@@ -770,6 +805,9 @@ Table.append(
 Table.append(
     [
         "XYZ",
+        "3",
+        total_count,
+        count2,
         M_XYZ_RMS,
         M_XYZ_DeltaE,
         M_XYZ_DeltaC,

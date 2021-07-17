@@ -211,7 +211,7 @@ class MyDelaunay:
     def __init__(obj, points, opt=""):
         obj.points = points
         obj.tri = Delaunay(
-            points, furthest_site=False, incremental=True, qhull_options=opt
+            points, furthest_site=False, incremental=False, qhull_options=opt
         )
 
     def possible(obj, point):
