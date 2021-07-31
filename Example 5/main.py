@@ -38,18 +38,22 @@ import libraries.MyOutput as output
 # OUT PUT MODE => 0 = Terminal Output, 1 = File Output
 OUTPUT = 0
 
+MUNSELL_FOR_EIGEN = 1
+MUNSELL_AS_SAMPLE = 0
+
+PLOT_ALL_SAMPLES = 0
+
+MUTUAL_SAMPLES = 1
+
 if OUTPUT:
     makeout()
     output.makeout()
 
-start_wave = 400
-end_wave = 700
+start_wave, end_wave = 400, 700
 data_size = 31
 distance = (end_wave - start_wave) / (data_size - 1)
 
-blue_sample_num = 7
-yellow_sample_num = 7
-red_sample_num = 7
+blue_sample_num, yellow_sample_num, red_sample_num = 7, 7, 7
 
 maxRMS = 0.001
 precise = 6
@@ -122,12 +126,6 @@ for i in range(munsell_size):
     munsell_R.append(newdata)
 munsell_R = np.array(munsell_R).T
 
-munsell_A = np.cov(munsell_R)
-eigenValues, eigenVectors = linalg.eig(munsell_A)
-idx = eigenValues.argsort()[::-1]
-eigenValues = eigenValues[idx]
-eigenVectors = eigenVectors[:, idx]
-
 R_mean = np.array([[sum(row) for row in munsell_R]])
 R_mean = R_mean.T / munsell_size
 
@@ -172,13 +170,6 @@ print(
         {"λ (nm)": wave_length, "R mean": R_mean}, headers="keys", tablefmt="fancy_grid"
     )
 )
-
-# print(eigenVectors)
-print("\n3 EigenVectors with Highest EigenValues")
-print(eigenVectors[0:3])
-print("\n3 Highest EigenValues")
-print(eigenValues[0:3])
-print()
 
 (p1,) = plt.plot(wave_length, BBB.getR(), color="blue", label="R Blue Dye")
 (p2,) = plt.plot(wave_length, RRR.getR(), color="red", label="R Red Dye")
@@ -282,9 +273,31 @@ for x in range(pr):
             XYZ_Lookup.append([Temp.getX(), Temp.getY(), Temp.getZ()])
             C_Lookup.append([Dis1[x], Dis2[y], Dis3[z]])
             R_Lookup.append(Mix.getR().T[0])
-            PCC_Lookup.append(mm.PC(Mix.getR().T[0], dim, eigenVectors, R_mean))
+
+# Eigen Vector & Value
+if MUNSELL_FOR_EIGEN:
+    munsell_A = np.cov(munsell_R)
+    eigenValues, eigenVectors = linalg.eig(munsell_A)
+    idx = eigenValues.argsort()[::-1]
+    eigenValues = eigenValues[idx]
+    eigenVectors = eigenVectors[:, idx]
+else:
+    R_Lookup = np.array(R_Lookup)
+    lookup_A = np.cov(R_Lookup.T)
+    eigenValues, eigenVectors = linalg.eig(lookup_A)
+    idx = eigenValues.argsort()[::-1]
+    eigenValues = eigenValues[idx]
+    eigenVectors = eigenVectors[:, idx]
+
+# print(eigenVectors)
+print("\n3 EigenVectors with Highest EigenValues")
+print(eigenVectors[0:3])
+print("\n3 Highest EigenValues")
+print(eigenValues[0:3])
+print()
 
 for i in range(len(R_Lookup)):
+    PCC_Lookup.append(mm.PC(R_Lookup[i], dim, eigenVectors, R_mean))
     (p1,) = plt.plot(wave_length, R_Lookup[i], color="green", label="R Lookup")
     lines = [p1]
     OBS_new = Observation(light_source, viewer, R_Lookup[i], "", "green")
@@ -346,23 +359,31 @@ XYZ_Samples = []
 C_Samples = []
 PCC_Samples = []
 
-Mix = Mixture(R_sub)
-for x in range(pr):
-    for y in range(pr):
-        for z in range(pr):
-            if (Dis1[x] + Dis2[y] + Dis3[z]) > 1.5 or (
-                Dis1[x] + Dis2[y] + Dis3[z]
-            ) == 0:
-                continue
-            Mix.clear()
-            Mix.add(Dis1[x], blue_KOVERS)
-            Mix.add(Dis2[y], red_KOVERS)
-            Mix.add(Dis3[z], yellow_KOVERS)
-            Temp = Observation(light_source, viewer, Mix.getR())
-            XYZ_Samples.append([Temp.getX(), Temp.getY(), Temp.getZ()])
-            C_Samples.append([Dis1[x], Dis2[y], Dis3[z]])
-            R_Samples.append(Mix.getR().T[0])
-            PCC_Samples.append(mm.PC(Mix.getR().T[0], dim, eigenVectors, R_mean))
+if MUNSELL_AS_SAMPLE:
+    for R_T in munsell_R.T:
+        Temp = Observation(light_source, viewer, R_T)
+        XYZ_Samples.append([Temp.getX(), Temp.getY(), Temp.getZ()])
+        C_Samples.append([0, 0, 0])
+        R_Samples.append(R_T)
+        PCC_Samples.append(mm.PC(R_T, dim, eigenVectors, R_mean))
+else:
+    Mix = Mixture(R_sub)
+    for x in range(pr):
+        for y in range(pr):
+            for z in range(pr):
+                if (Dis1[x] + Dis2[y] + Dis3[z]) > 1.5 or (
+                    Dis1[x] + Dis2[y] + Dis3[z]
+                ) == 0:
+                    continue
+                Mix.clear()
+                Mix.add(Dis1[x], blue_KOVERS)
+                Mix.add(Dis2[y], red_KOVERS)
+                Mix.add(Dis3[z], yellow_KOVERS)
+                Temp = Observation(light_source, viewer, Mix.getR())
+                XYZ_Samples.append([Temp.getX(), Temp.getY(), Temp.getZ()])
+                C_Samples.append([Dis1[x], Dis2[y], Dis3[z]])
+                R_Samples.append(Mix.getR().T[0])
+                PCC_Samples.append(mm.PC(Mix.getR().T[0], dim, eigenVectors, R_mean))
 
 R_Samples = np.array(R_Samples)
 XYZ_Samples = np.array(XYZ_Samples)
@@ -432,6 +453,8 @@ for i in range(len(R_Samples)):
 output.save(Table, "Samples_table")
 total_count = len(R_Samples)
 print()
+R_calc = MyDelaunay(PCC_Lookup)
+XYZ_calc = MyDelaunay(XYZ_Lookup)
 print(Dis1)
 
 
@@ -441,7 +464,6 @@ print(Dis1)
 
 
 count1 = 0
-R_calc = MyDelaunay(PCC_Lookup)
 
 """ Another method to calculate with delaunay
     from scipy.interpolate import NearestNDInterpolator
@@ -451,23 +473,20 @@ R_calc = MyDelaunay(PCC_Lookup)
 """
 
 # Result
-M_R_RMS = 0
-M_R_DeltaE = 0
-M_R_DeltaC = 0
-M_R_GFC = 0
+M_R_RMS, M_R_DeltaE, M_R_DeltaC, M_R_GFC = 0, 0, 0, 0
 
-M_R_minRMS = 0
-M_R_maxRMS = 0
+M_R_minRMS, M_R_maxRMS = 0, 0
+M_R_minRMS_no, M_R_maxRMS_no = -1, -1
 
-M_R_minE = 0
-M_R_maxE = 0
+M_R_minE, M_R_maxE = 0, 0
+M_R_minE_no, M_R_maxE_no = -1, -1
 
-M_R_minC = 0
-M_R_maxC = 0
+M_R_minC, M_R_maxC = 0, 0
 
-M_R_minGFC = 0
-M_R_maxGFC = 0
+M_R_minGFC, M_R_maxGFC = 0, 0
+M_R_minGFC_no, M_R_maxGFC_no = -1, -1
 
+Method_PCC_R = {}
 for i in range(len(R_Samples)):
     R_std = R_Samples[i]
     R_Find = PCC_Samples[i]
@@ -476,6 +495,11 @@ for i in range(len(R_Samples)):
         res = R_calc.getResult(R_Find, C_Lookup)
     except Exception:
         continue
+    if MUTUAL_SAMPLES:
+        try:
+            XYZ_calc.getResult(XYZ_Samples[i], C_Lookup)
+        except Exception:
+            continue
 
     count1 += 1
     C_Inter = res[0]
@@ -485,6 +509,7 @@ for i in range(len(R_Samples)):
     Mix.add(C_Inter[1], red_KOVERS)
     Mix.add(C_Inter[2], yellow_KOVERS)
     R_Inter = Mix.getR()
+    Method_PCC_R[i] = R_Inter
 
     Inter = Observation(light_source, viewer, R_Inter)
     STD = Observation(light_source, viewer, R_std)
@@ -535,17 +560,30 @@ for i in range(len(R_Samples)):
         M_R_minE = DeltaE_Inter
         M_R_maxE = DeltaE_Inter
 
+        (
+            M_R_minRMS_no,
+            M_R_maxRMS_no,
+            M_R_minE_no,
+            M_R_maxE_no,
+            M_R_minGFC_no,
+            M_R_maxGFC_no,
+        ) = (i, i, i, i, i, i)
+
     if RMS_Inter < M_R_minRMS:
         M_R_minRMS = RMS_Inter
+        M_R_minRMS_no = i
 
     if RMS_Inter > M_R_maxRMS:
         M_R_maxRMS = RMS_Inter
+        M_R_maxRMS_no = i
 
     if DeltaE_Inter < M_R_minE:
         M_R_minE = DeltaE_Inter
+        M_R_minE_no = i
 
     if DeltaE_Inter > M_R_maxE:
         M_R_maxE = DeltaE_Inter
+        M_R_maxE_no = i
 
     if DeltaC_Inter < M_R_minC:
         M_R_minC = DeltaC_Inter
@@ -555,14 +593,25 @@ for i in range(len(R_Samples)):
 
     if GFC_Inter < M_R_minGFC:
         M_R_minGFC = GFC_Inter
+        M_R_minGFC_no = i
 
     if GFC_Inter > M_R_maxGFC:
         M_R_maxGFC = GFC_Inter
+        M_R_maxGFC_no = i
 
-    (p1,) = plt.plot(wave_length, R_std, color="green", label="R Sample " + str(i + 1))
-    (p2,) = plt.plot(wave_length, R_Inter, color="black", label="R Interpolated (PCA)")
-    lines = [p1, p2]
-    draw_R_style1(lines, comment=text_all)
+    if PLOT_ALL_SAMPLES:
+        (p1,) = plt.plot(
+            wave_length, R_std, color="green", label="R Sample " + str(i + 1)
+        )
+        (p2,) = plt.plot(
+            wave_length, R_Inter, color="black", label="R Interpolated (PCA)"
+        )
+        lines = [p1, p2]
+        draw_R_style1(lines, comment=text_all)
+
+# Result - Plot
+array = [M_R_minE_no, M_R_maxE_no, M_R_minRMS_no, M_R_maxRMS_no]
+draw_R_subplot_style1(R_Samples, Method_PCC_R, array, "PCA")
 
 # Result
 M_R_RMS = M_R_RMS / count1
@@ -590,26 +639,22 @@ print("Max GFC: ", M_R_maxGFC)
 
 
 count2 = 0
-XYZ_calc = MyDelaunay(XYZ_Lookup)
 
 # Result
-M_XYZ_RMS = 0
-M_XYZ_DeltaE = 0
-M_XYZ_DeltaC = 0
-M_XYZ_GFC = 0
+M_XYZ_RMS, M_XYZ_DeltaE, M_XYZ_DeltaC, M_XYZ_GFC = 0, 0, 0, 0
 
-M_XYZ_minRMS = 0
-M_XYZ_maxRMS = 0
+M_XYZ_minRMS, M_XYZ_maxRMS = 0, 0
+M_XYZ_minRMS_no, M_XYZ_maxRMS_no = -1, -1
 
-M_XYZ_minE = 0
-M_XYZ_maxE = 0
+M_XYZ_minE, M_XYZ_maxE = 0, 0
+M_XYZ_minE_no, M_XYZ_maxE_no = -1, -1
 
-M_XYZ_minC = 0
-M_XYZ_maxC = 0
+M_XYZ_minC, M_XYZ_maxC = 0, 0
 
-M_XYZ_minGFC = 0
-M_XYZ_maxGFC = 0
+M_XYZ_minGFC, M_XYZ_maxGFC = 0, 0
+M_XYZ_minGFC_no, M_XYZ_maxGFC_no = -1, -1
 
+Method_XYZ_R = {}
 for i in range(len(R_Samples)):
     # print(R_Samples[i])
     R_std = R_Samples[i]
@@ -620,6 +665,11 @@ for i in range(len(R_Samples)):
         res = XYZ_calc.getResult(Find, C_Lookup)
     except Exception:
         continue
+    if MUTUAL_SAMPLES:
+        try:
+            R_calc.getResult(PCC_Samples[i], C_Lookup)
+        except Exception:
+            continue
 
     count2 += 1
     C_Inter = res[0]
@@ -629,6 +679,8 @@ for i in range(len(R_Samples)):
     Mix.add(C_Inter[1], red_KOVERS)
     Mix.add(C_Inter[2], yellow_KOVERS)
     R_Inter = Mix.getR()
+    Method_XYZ_R[i] = R_Inter
+
     Inter = Observation(light_source, viewer, R_Inter)
     STD = Observation(light_source, viewer, R_std)
     compare = Compare(Inter, STD)
@@ -677,17 +729,30 @@ for i in range(len(R_Samples)):
         M_XYZ_minGFC = GFC_Inter
         M_XYZ_maxGFC = GFC_Inter
 
+        (
+            M_XYZ_minRMS_no,
+            M_XYZ_maxRMS_no,
+            M_XYZ_minE_no,
+            M_XYZ_maxE_no,
+            M_XYZ_minGFC_no,
+            M_XYZ_maxGFC_no,
+        ) = (i, i, i, i, i, i)
+
     if RMS_Inter < M_XYZ_minRMS:
         M_XYZ_minRMS = RMS_Inter
+        M_XYZ_minRMS_no = i
 
     if RMS_Inter > M_XYZ_maxRMS:
         M_XYZ_maxRMS = RMS_Inter
+        M_XYZ_maxRMS_no = i
 
     if DeltaE_Inter < M_XYZ_minE:
         M_XYZ_minE = DeltaE_Inter
+        M_XYZ_minE_no = i
 
     if DeltaE_Inter > M_XYZ_maxE:
         M_XYZ_maxE = DeltaE_Inter
+        M_XYZ_maxE_no = i
 
     if DeltaC_Inter < M_XYZ_minC:
         M_XYZ_minC = DeltaC_Inter
@@ -697,14 +762,25 @@ for i in range(len(R_Samples)):
 
     if GFC_Inter < M_XYZ_minGFC:
         M_XYZ_minGFC = GFC_Inter
+        M_XYZ_minGFC_no = i
 
     if GFC_Inter > M_XYZ_maxGFC:
         M_XYZ_maxGFC = GFC_Inter
+        M_XYZ_maxGFC_no = i
 
-    (p1,) = plt.plot(wave_length, R_std, color="green", label="R Sample " + str(i + 1))
-    (p2,) = plt.plot(wave_length, R_Inter, color="black", label="R Interpolated (XYZ)")
-    lines = [p1, p2]
-    draw_R_style1(lines, comment=text_all)
+    if PLOT_ALL_SAMPLES:
+        (p1,) = plt.plot(
+            wave_length, R_std, color="green", label="R Sample " + str(i + 1)
+        )
+        (p2,) = plt.plot(
+            wave_length, R_Inter, color="black", label="R Interpolated (XYZ)"
+        )
+        lines = [p1, p2]
+        draw_R_style1(lines, comment=text_all)
+
+# Result - Plot
+array = [M_XYZ_minE_no, M_XYZ_maxE_no, M_XYZ_minRMS_no, M_XYZ_maxRMS_no]
+draw_R_subplot_style1(R_Samples, Method_XYZ_R, array, "XYZ")
 
 # Result
 M_XYZ_RMS = M_XYZ_RMS / count2

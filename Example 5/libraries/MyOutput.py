@@ -3,6 +3,7 @@ import texttable
 import os
 import shutil
 import pathlib
+import traceback
 
 
 OUTPUT = 0
@@ -60,8 +61,9 @@ def save(table, filename):
 
         try:
             import win32com.client as win32
+            import win32com
 
-            excel = win32.gencache.EnsureDispatch("Excel.Application")
+            excel = win32com.client.Dispatch('Excel.Application')
             wb = excel.Workbooks.Open(os.path.abspath(os.getcwd()) + "\\" + filename)
             ws = wb.Worksheets("Sheet1")
             ws.Columns.AutoFit()
@@ -69,3 +71,4 @@ def save(table, filename):
             excel.Application.Quit()
         except Exception:
             print("Unable to autofit excel file")
+            traceback.print_exc()
