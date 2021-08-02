@@ -9,12 +9,9 @@
 import numpy as np
 import numpy.linalg as linalg
 import pandas as pd
+from scipy.spatial import Delaunay
 
 import matplotlib.pyplot as plt
-
-from scipy.spatial import Delaunay
-from pyhull.delaunay import DelaunayTri
-
 from tabulate import tabulate
 
 
@@ -30,20 +27,36 @@ import libraries.MyMath as mm
 import libraries.MyOutput as output
 
 
-# # Initial Data
+# # Start Timer
 
 # In[3]:
 
 
-# OUT PUT MODE => 0 = Terminal Output, 1 = File Output
-OUTPUT = 0
+import time
 
-MUNSELL_FOR_EIGEN = 1
-MUNSELL_AS_SAMPLE = 0
+program_time = time.time()
 
-PLOT_ALL_SAMPLES = 0
 
-MUTUAL_SAMPLES = 1
+# # Initial Data
+
+# In[4]:
+
+
+OUTPUT = 0  # OUT PUT MODE => 0 = Terminal Output, 1 = File Output
+
+MUNSELL_FOR_EIGEN = 1  # 0 = Use created lookup table for eigen vectors calculation, 1 = Use Munsell for eigen vectors calculation
+
+MUNSELL_AS_SAMPLE = (
+    0  # 0 = Create samples manually from dyes, 1 = Use Munsell as samples
+)
+
+PLOT_ALL_SAMPLES = (
+    0  # 0 = Don't plot all samples comparison, 1 = Plot all samples comparison
+)
+
+MUTUAL_SAMPLES = 1  # 0 = Examine all possible samples for each method, 1 = Examine samples which are valid in both methods
+
+precise = 5  # Final output precise
 
 if OUTPUT:
     makeout()
@@ -54,9 +67,6 @@ data_size = 31
 distance = (end_wave - start_wave) / (data_size - 1)
 
 blue_sample_num, yellow_sample_num, red_sample_num = 7, 7, 7
-
-maxRMS = 0.001
-precise = 6
 
 """
 Creating Wave lengths array for plots
@@ -132,7 +142,7 @@ R_mean = R_mean.T / munsell_size
 
 # # K OVER S for dyes
 
-# In[4]:
+# In[5]:
 
 
 # initial object to find K OVER S for Blue Dye
@@ -159,10 +169,14 @@ blue_KOVERS = BBB.getKOVERS()
 red_KOVERS = RRR.getKOVERS()
 yellow_KOVERS = YYY.getKOVERS()
 
+blue_R = BBB.getR()
+red_R = RRR.getR()
+yellow_R = YYY.getR()
+
 
 # # Analyze current data
 
-# In[5]:
+# In[6]:
 
 
 print(
@@ -171,17 +185,17 @@ print(
     )
 )
 
-(p1,) = plt.plot(wave_length, BBB.getR(), color="blue", label="R Blue Dye")
-(p2,) = plt.plot(wave_length, RRR.getR(), color="red", label="R Red Dye")
-(p3,) = plt.plot(wave_length, YYY.getR(), color="yellow", label="R Yellow Dye")
+(p1,) = plt.plot(wave_length, blue_R, color="blue", label="R Blue Dye")
+(p2,) = plt.plot(wave_length, red_R, color="red", label="R Red Dye")
+(p3,) = plt.plot(wave_length, yellow_R, color="yellow", label="R Yellow Dye")
 lines = [p1, p2, p3]
 draw_R_style1(lines)
 
 print()
 
-(p1,) = plt.plot(wave_length, BBB.getKOVERS(), color="blue", label="K/S Blue Dye")
-(p2,) = plt.plot(wave_length, RRR.getKOVERS(), color="red", label="K/S Red Dye")
-(p3,) = plt.plot(wave_length, YYY.getKOVERS(), color="yellow", label="K/S Yellow Dye")
+(p1,) = plt.plot(wave_length, blue_KOVERS, color="blue", label="K/S Blue Dye")
+(p2,) = plt.plot(wave_length, red_KOVERS, color="red", label="K/S Red Dye")
+(p3,) = plt.plot(wave_length, yellow_KOVERS, color="yellow", label="K/S Yellow Dye")
 lines = [p1, p2, p3]
 draw_KoverS_style1(lines)
 
@@ -235,16 +249,17 @@ resetSwatch()
 
 # # Same R Substrate for New Surface
 
-# In[6]:
+# In[7]:
 
 
 R_sub = R_sub
 # R_sub = np.array([mm.array_repeat(1, data_size)]).T
+Mix = Mixture(R_sub)
 
 
 # # Creating Look up Table
 
-# In[7]:
+# In[8]:
 
 
 Dis1 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
@@ -259,7 +274,6 @@ XYZ_Lookup = []
 C_Lookup = []
 PCC_Lookup = []
 
-Mix = Mixture(R_sub)
 for x in range(pr):
     for y in range(pr):
         for z in range(pr):
@@ -346,7 +360,7 @@ print(Dis1)
 
 # # Creating Samples to Evaluate Methods
 
-# In[8]:
+# In[9]:
 
 
 Dis1 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
@@ -367,7 +381,6 @@ if MUNSELL_AS_SAMPLE:
         R_Samples.append(R_T)
         PCC_Samples.append(mm.PC(R_T, dim, eigenVectors, R_mean))
 else:
-    Mix = Mixture(R_sub)
     for x in range(pr):
         for y in range(pr):
             for z in range(pr):
@@ -410,13 +423,13 @@ draw_rgb_from_all()
 resetSwatch()
 
 # Blue
-OBS_new = Observation(light_source, viewer, BBB.getR(), "Blue Dye", "black")
+OBS_new = Observation(light_source, viewer, blue_R, "Blue Dye", "black")
 all_pointes.append(OBS_new)
 # Red
-OBS_new = Observation(light_source, viewer, RRR.getR(), "Red Dye", "black")
+OBS_new = Observation(light_source, viewer, red_R, "Red Dye", "black")
 all_pointes.append(OBS_new)
 # Yellow
-OBS_new = Observation(light_source, viewer, YYY.getR(), "Yellow Dye", "black")
+OBS_new = Observation(light_source, viewer, yellow_R, "Yellow Dye", "black")
 all_pointes.append(OBS_new)
 # D65
 OBS_new = Observation(light_source, viewer, 1, "D65", "white")
@@ -453,26 +466,38 @@ for i in range(len(R_Samples)):
 output.save(Table, "Samples_table")
 total_count = len(R_Samples)
 print()
+print(Dis1)
+
+
+# # Delaunay Triangulation
+
+# In[10]:
+
+
+start_time = time.time()
+
 R_calc = MyDelaunay(PCC_Lookup)
 XYZ_calc = MyDelaunay(XYZ_Lookup)
-print(Dis1)
+
+print("Execution takes %s seconds" % (time.time() - start_time))
 
 
 # # Method 1 Interpolation using R with reduced dimension Based on PCA (3D) => Project purpose
 
-# In[9]:
+# In[11]:
 
 
 count1 = 0
 
 """ Another method to calculate with delaunay
+    from pyhull.delaunay import DelaunayTri
     from scipy.interpolate import NearestNDInterpolator
     why = LinearNDInterpolator(R_Lookup,C_Lookup)
     why = NearestNDInterpolator(R_Lookup,C_Lookup)
     print("lib",why(R_Find))
 """
 
-# Result
+# Initial Value
 M_R_RMS, M_R_DeltaE, M_R_DeltaC, M_R_GFC = 0, 0, 0, 0
 
 M_R_minRMS, M_R_maxRMS = 0, 0
@@ -482,6 +507,7 @@ M_R_minE, M_R_maxE = 0, 0
 M_R_minE_no, M_R_maxE_no = -1, -1
 
 M_R_minC, M_R_maxC = 0, 0
+M_R_minC_no, M_R_maxC_no = -1, -1
 
 M_R_minGFC, M_R_maxGFC = 0, 0
 M_R_minGFC_no, M_R_maxGFC_no = -1, -1
@@ -519,6 +545,8 @@ for i in range(len(R_Samples)):
     DeltaE_Inter = compare.delta_E()
     GFC_Inter = compare.GFC()
     DeltaC_Inter = mm.RMS(C_Samples[i], C_Inter)
+    if MUNSELL_AS_SAMPLE:
+        DeltaC_Inter = 0
 
     text_R = "R: " + str(R_std)
     text_RMS = "RMS: " + str(RMS_Inter)
@@ -541,24 +569,20 @@ for i in range(len(R_Samples)):
         + text_R
     )
 
-    # Result
+    # Sum
     M_R_RMS = M_R_RMS + RMS_Inter
     M_R_DeltaE = M_R_DeltaE + DeltaE_Inter
     M_R_DeltaC = M_R_DeltaC + DeltaC_Inter
     M_R_GFC = M_R_GFC + GFC_Inter
 
     if count1 == 1:
-        M_R_minRMS = RMS_Inter
-        M_R_maxRMS = RMS_Inter
+        M_R_minRMS, M_R_maxRMS = RMS_Inter, RMS_Inter
 
-        M_R_minC = DeltaC_Inter
-        M_R_maxC = DeltaC_Inter
+        M_R_minC, M_R_maxC = DeltaC_Inter, DeltaC_Inter
 
-        M_R_minGFC = GFC_Inter
-        M_R_maxGFC = GFC_Inter
+        M_R_minGFC, M_R_maxGFC = GFC_Inter, GFC_Inter
 
-        M_R_minE = DeltaE_Inter
-        M_R_maxE = DeltaE_Inter
+        M_R_minE, M_R_maxE = DeltaE_Inter, DeltaE_Inter
 
         (
             M_R_minRMS_no,
@@ -567,7 +591,9 @@ for i in range(len(R_Samples)):
             M_R_maxE_no,
             M_R_minGFC_no,
             M_R_maxGFC_no,
-        ) = (i, i, i, i, i, i)
+            M_R_minC_no,
+            M_R_maxC_no,
+        ) = (i, i, i, i, i, i, i, i)
 
     if RMS_Inter < M_R_minRMS:
         M_R_minRMS = RMS_Inter
@@ -587,9 +613,11 @@ for i in range(len(R_Samples)):
 
     if DeltaC_Inter < M_R_minC:
         M_R_minC = DeltaC_Inter
+        M_R_minC_no = i
 
     if DeltaC_Inter > M_R_maxC:
         M_R_maxC = DeltaC_Inter
+        M_R_maxC_no = i
 
     if GFC_Inter < M_R_minGFC:
         M_R_minGFC = GFC_Inter
@@ -609,15 +637,25 @@ for i in range(len(R_Samples)):
         lines = [p1, p2]
         draw_R_style1(lines, comment=text_all)
 
-# Result - Plot
-array = [M_R_minE_no, M_R_maxE_no, M_R_minRMS_no, M_R_maxRMS_no]
-draw_R_subplot_style1(R_Samples, Method_PCC_R, array, "PCA")
+if count1 != 0:
+    # Result - Plot
+    array = [
+        M_R_minE_no,
+        M_R_maxE_no,
+        M_R_minRMS_no,
+        M_R_maxRMS_no,
+        M_R_minGFC_no,
+        M_R_maxGFC_no,
+        M_R_minC_no,
+        M_R_maxC_no,
+    ]
+    draw_R_subplot_style1(R_Samples, Method_PCC_R, array, "PCA")
 
-# Result
-M_R_RMS = M_R_RMS / count1
-M_R_DeltaE = M_R_DeltaE / count1
-M_R_DeltaC = M_R_DeltaC / count1
-M_R_GFC = M_R_GFC / count1
+    # Result
+    M_R_RMS = M_R_RMS / count1
+    M_R_DeltaE = M_R_DeltaE / count1
+    M_R_DeltaC = M_R_DeltaC / count1
+    M_R_GFC = M_R_GFC / count1
 
 print("mean RMS: ", M_R_RMS)
 print("mean ΔE: ", M_R_DeltaE)
@@ -635,12 +673,12 @@ print("Max GFC: ", M_R_maxGFC)
 
 # # Method 2 Interpolation using XYZ => For Comparison
 
-# In[10]:
+# In[12]:
 
 
 count2 = 0
 
-# Result
+# Initial Value
 M_XYZ_RMS, M_XYZ_DeltaE, M_XYZ_DeltaC, M_XYZ_GFC = 0, 0, 0, 0
 
 M_XYZ_minRMS, M_XYZ_maxRMS = 0, 0
@@ -650,6 +688,7 @@ M_XYZ_minE, M_XYZ_maxE = 0, 0
 M_XYZ_minE_no, M_XYZ_maxE_no = -1, -1
 
 M_XYZ_minC, M_XYZ_maxC = 0, 0
+M_XYZ_minC_no, M_XYZ_maxC_no = -1, -1
 
 M_XYZ_minGFC, M_XYZ_maxGFC = 0, 0
 M_XYZ_minGFC_no, M_XYZ_maxGFC_no = -1, -1
@@ -688,6 +727,8 @@ for i in range(len(R_Samples)):
     DeltaE_Inter = compare.delta_E()
     GFC_Inter = compare.GFC()
     DeltaC_Inter = mm.RMS(C_Samples[i], C_Inter)
+    if MUNSELL_AS_SAMPLE:
+        DeltaC_Inter = 0
 
     text_R = "R: " + str(R_std)
     text_RMS = "RMS: " + str(RMS_Inter)
@@ -710,24 +751,20 @@ for i in range(len(R_Samples)):
         + text_R
     )
 
-    # Result
+    # Sum
     M_XYZ_RMS = M_XYZ_RMS + RMS_Inter
     M_XYZ_DeltaE = M_XYZ_DeltaE + DeltaE_Inter
     M_XYZ_DeltaC = M_XYZ_DeltaC + DeltaC_Inter
     M_XYZ_GFC = M_XYZ_GFC + GFC_Inter
 
     if count2 == 1:
-        M_XYZ_minRMS = RMS_Inter
-        M_XYZ_maxRMS = RMS_Inter
+        M_XYZ_minRMS, M_XYZ_maxRMS = RMS_Inter, RMS_Inter
 
-        M_XYZ_minE = DeltaE_Inter
-        M_XYZ_maxE = DeltaE_Inter
+        M_XYZ_minE, M_XYZ_maxE = DeltaE_Inter, DeltaE_Inter
 
-        M_XYZ_minC = DeltaC_Inter
-        M_XYZ_maxC = DeltaC_Inter
+        M_XYZ_minC, M_XYZ_maxC = DeltaC_Inter, DeltaC_Inter
 
-        M_XYZ_minGFC = GFC_Inter
-        M_XYZ_maxGFC = GFC_Inter
+        M_XYZ_minGFC, M_XYZ_maxGFC = GFC_Inter, GFC_Inter
 
         (
             M_XYZ_minRMS_no,
@@ -736,7 +773,9 @@ for i in range(len(R_Samples)):
             M_XYZ_maxE_no,
             M_XYZ_minGFC_no,
             M_XYZ_maxGFC_no,
-        ) = (i, i, i, i, i, i)
+            M_XYZ_minC_no,
+            M_XYZ_maxC_no,
+        ) = (i, i, i, i, i, i, i, i)
 
     if RMS_Inter < M_XYZ_minRMS:
         M_XYZ_minRMS = RMS_Inter
@@ -756,9 +795,11 @@ for i in range(len(R_Samples)):
 
     if DeltaC_Inter < M_XYZ_minC:
         M_XYZ_minC = DeltaC_Inter
+        M_XYZ_minC_no = i
 
     if DeltaC_Inter > M_XYZ_maxC:
         M_XYZ_maxC = DeltaC_Inter
+        M_XYZ_maxC_no = i
 
     if GFC_Inter < M_XYZ_minGFC:
         M_XYZ_minGFC = GFC_Inter
@@ -778,15 +819,25 @@ for i in range(len(R_Samples)):
         lines = [p1, p2]
         draw_R_style1(lines, comment=text_all)
 
-# Result - Plot
-array = [M_XYZ_minE_no, M_XYZ_maxE_no, M_XYZ_minRMS_no, M_XYZ_maxRMS_no]
-draw_R_subplot_style1(R_Samples, Method_XYZ_R, array, "XYZ")
+if count2 != 0:
+    # Result - Plot
+    array = [
+        M_XYZ_minE_no,
+        M_XYZ_maxE_no,
+        M_XYZ_minRMS_no,
+        M_XYZ_maxRMS_no,
+        M_XYZ_minGFC_no,
+        M_XYZ_maxGFC_no,
+        M_XYZ_minC_no,
+        M_XYZ_maxC_no,
+    ]
+    draw_R_subplot_style1(R_Samples, Method_XYZ_R, array, "XYZ")
 
-# Result
-M_XYZ_RMS = M_XYZ_RMS / count2
-M_XYZ_DeltaE = M_XYZ_DeltaE / count2
-M_XYZ_DeltaC = M_XYZ_DeltaC / count2
-M_XYZ_GFC = M_XYZ_GFC / count2
+    # Result
+    M_XYZ_RMS = M_XYZ_RMS / count2
+    M_XYZ_DeltaE = M_XYZ_DeltaE / count2
+    M_XYZ_DeltaC = M_XYZ_DeltaC / count2
+    M_XYZ_GFC = M_XYZ_GFC / count2
 
 print("mean RMS: ", M_XYZ_RMS)
 print("mean ΔE: ", M_XYZ_DeltaE)
@@ -804,10 +855,10 @@ print("Max GFC: ", M_XYZ_maxGFC)
 
 # # Showing Results
 
-# In[11]:
+# In[13]:
 
 
-pr = 5
+pr = precise
 M_R_RMS = round(M_R_RMS, pr)
 M_R_DeltaE = round(M_R_DeltaE, pr)
 M_R_DeltaC = round(M_R_DeltaC, pr)
@@ -900,11 +951,12 @@ Table.append(
 )
 
 output.save(Table, "Result")
-print("Finished!")
 
 
-# In[ ]:
+# # Stop Timer
+
+# In[14]:
 
 
-
+print("Program execution takes %s seconds" % (time.time() - program_time))
 

@@ -68,153 +68,123 @@ def draw_R_style1(lines, comment=""):
 def draw_R_subplot_style1(R_Samples, Method_PCC_R, array, method="PCA"):
     global wave_length
 
-    M_R_minE_no = array[0]
-    M_R_maxE_no = array[1]
-    M_R_minRMS_no = array[2]
-    M_R_maxRMS_no = array[3]
+    M_R_minC_no = array[6]
+    M_R_maxC_no = array[7]
+    if M_R_minC_no == M_R_maxC_no:
+        array.pop(7)
+        array.pop(6)
 
     fig, axs = plt.subplots(4, 2, constrained_layout=True)
-    (p1,) = axs[0, 0].plot(
-        wave_length,
-        R_Samples[M_R_minE_no],
-        color="green",
-        label="R Sample " + str(M_R_minE_no),
-    )
-    (p2,) = axs[0, 0].plot(
-        wave_length,
-        Method_PCC_R[M_R_minE_no],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[0, 0].legend(lines, [l.get_label() for l in lines])
 
-    (p1,) = axs[0, 1].plot(
-        wave_length,
-        R_Samples[M_R_maxE_no],
-        color="green",
-        label="R Sample " + str(M_R_maxE_no),
-    )
-    (p2,) = axs[0, 1].plot(
-        wave_length,
-        Method_PCC_R[M_R_maxE_no],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[0, 1].legend(lines, [l.get_label() for l in lines])
+    row, col = 0, 0
+    for i in array:
+        # Each Cell
+        (p1,) = axs[row, col].plot(
+            wave_length,
+            R_Samples[i],
+            color="green",
+            label="R Sample " + str(i),
+        )
+        (p2,) = axs[row, col].plot(
+            wave_length,
+            Method_PCC_R[i],
+            color="black",
+            label="R Interpolated " + method,
+        )
+        lines = [p1, p2]
+        axs[row, col].legend(lines, [l.get_label() for l in lines])
 
-    (p1,) = axs[1, 0].plot(
-        wave_length,
-        R_Samples[M_R_minRMS_no],
-        color="green",
-        label="R Sample " + str(M_R_minRMS_no),
-    )
-    (p2,) = axs[1, 0].plot(
-        wave_length,
-        Method_PCC_R[M_R_minRMS_no],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[1, 0].legend(lines, [l.get_label() for l in lines])
-
-    (p1,) = axs[1, 1].plot(
-        wave_length,
-        R_Samples[M_R_maxRMS_no],
-        color="green",
-        label="R Sample " + str(M_R_maxRMS_no),
-    )
-    (p2,) = axs[1, 1].plot(
-        wave_length,
-        Method_PCC_R[M_R_maxRMS_no],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[1, 1].legend(lines, [l.get_label() for l in lines])
-
-    Method_PCC_R.pop(M_R_minE_no, None)
-    Method_PCC_R.pop(M_R_maxE_no, None)
-    Method_PCC_R.pop(M_R_minRMS_no, None)
-    Method_PCC_R.pop(M_R_maxRMS_no, None)
-
-    random_key = random.sample(list(Method_PCC_R), 4)
-
-    (p1,) = axs[2, 0].plot(
-        wave_length,
-        R_Samples[random_key[0]],
-        color="green",
-        label="R Sample " + str(random_key[0]),
-    )
-    (p2,) = axs[2, 0].plot(
-        wave_length,
-        Method_PCC_R[random_key[0]],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[2, 0].legend(lines, [l.get_label() for l in lines])
-
-    (p1,) = axs[2, 1].plot(
-        wave_length,
-        R_Samples[random_key[1]],
-        color="green",
-        label="R Sample " + str(random_key[1]),
-    )
-    (p2,) = axs[2, 1].plot(
-        wave_length,
-        Method_PCC_R[random_key[1]],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[2, 1].legend(lines, [l.get_label() for l in lines])
-
-    (p1,) = axs[3, 0].plot(
-        wave_length,
-        R_Samples[random_key[2]],
-        color="green",
-        label="R Sample " + str(random_key[2]),
-    )
-    (p2,) = axs[3, 0].plot(
-        wave_length,
-        Method_PCC_R[random_key[2]],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[3, 0].legend(lines, [l.get_label() for l in lines])
-
-    (p1,) = axs[3, 1].plot(
-        wave_length,
-        R_Samples[random_key[3]],
-        color="green",
-        label="R Sample " + str(random_key[3]),
-    )
-    (p2,) = axs[3, 1].plot(
-        wave_length,
-        Method_PCC_R[random_key[3]],
-        color="black",
-        label="R Interpolated " + method,
-    )
-    lines = [p1, p2]
-    axs[3, 1].legend(lines, [l.get_label() for l in lines])
+        col += 1
+        if col == 2:
+            row += 1
+            col = 0
 
     axs[0, 0].set_title("Min ΔE")
     axs[0, 1].set_title("Max ΔE")
     axs[1, 0].set_title("Min RMS")
     axs[1, 1].set_title("Max RMS")
-    axs[2, 0].set_title("Random Sample")
-    axs[2, 1].set_title("Random Sample")
-    axs[3, 0].set_title("Random Sample")
-    axs[3, 1].set_title("Random Sample")
+    axs[2, 0].set_title("Min GFC")
+    axs[2, 1].set_title("Max GFC")
+    axs[3, 0].set_title("Min ΔC")
+    axs[3, 1].set_title("Max ΔC")
 
     for ax in axs.flat:
         ax.set(xlabel="Wave Length", ylabel="R")
         ax.set_ylim(0, 1)
         ax.set_xlim(400, 700)
         ax.figure.set_size_inches(10, 10)
+
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    for ax in axs.flat:
+        ax.label_outer()
+
+    global OUTPUT, Name
+    if OUTPUT:
+        fig.savefig("output_img/" + str(Name) + ".jpg", bbox_inches="tight", dpi=1200)
+        Name += 1
+    draw_R_subplot_style2(R_Samples, Method_PCC_R, array, method)
+
+
+def draw_R_subplot_style2(R_Samples, Method_PCC_R, array, method="PCA"):
+    global wave_length
+
+    M_R_minE_no = array[0]
+    M_R_maxE_no = array[1]
+    M_R_minRMS_no = array[2]
+    M_R_maxRMS_no = array[3]
+    M_R_minGFC_no = array[4]
+    M_R_maxGFC_no = array[5]
+    try:
+        M_R_minC_no = array[6]
+        M_R_maxC_no = array[7]
+    except Exception:
+        M_R_minC_no = array[4]
+        M_R_maxC_no = array[5]
+
+    Method_PCC_R.pop(M_R_minE_no, None)
+    Method_PCC_R.pop(M_R_maxE_no, None)
+    Method_PCC_R.pop(M_R_minRMS_no, None)
+    Method_PCC_R.pop(M_R_maxRMS_no, None)
+    Method_PCC_R.pop(M_R_minGFC_no, None)
+    Method_PCC_R.pop(M_R_maxGFC_no, None)
+    Method_PCC_R.pop(M_R_minC_no, None)
+    Method_PCC_R.pop(M_R_maxC_no, None)
+    if len(list(Method_PCC_R)) >= 8:
+        plot_size = 4
+    else:
+        plot_size = int(len(list(Method_PCC_R) / 2))
+
+    random_key = random.sample(list(Method_PCC_R), plot_size * 2)
+    fig, axs = plt.subplots(plot_size, 2, constrained_layout=True)
+    row, col = 0, 0
+    for i in random_key:
+        # Each Cell
+        (p1,) = axs[row, col].plot(
+            wave_length,
+            R_Samples[i],
+            color="green",
+            label="R Sample " + str(i),
+        )
+        (p2,) = axs[row, col].plot(
+            wave_length,
+            Method_PCC_R[i],
+            color="black",
+            label="R Interpolated " + method,
+        )
+        lines = [p1, p2]
+        axs[row, col].legend(lines, [l.get_label() for l in lines])
+
+        col += 1
+        if col == 2:
+            row += 1
+            col = 0
+
+    for ax in axs.flat:
+        ax.set(xlabel="Wave Length", ylabel="R")
+        ax.set_ylim(0, 1)
+        ax.set_xlim(400, 700)
+        ax.figure.set_size_inches(10, 10)
+        ax.set_title("Random Sample")
 
     # Hide x labels and tick labels for top plots and y ticks for right plots.
     for ax in axs.flat:
