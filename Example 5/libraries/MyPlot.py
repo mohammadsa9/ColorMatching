@@ -152,7 +152,7 @@ def draw_R_subplot_style2(R_Samples, Method_PCC_R, array, method="PCA"):
     if len(list(Method_PCC_R)) >= 8:
         plot_size = 4
     else:
-        plot_size = int(len(list(Method_PCC_R) / 2))
+        plot_size = int(len(list(Method_PCC_R))/2)
 
     random_key = random.sample(list(Method_PCC_R), plot_size * 2)
     fig, axs = plt.subplots(plot_size, 2, constrained_layout=True)

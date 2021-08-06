@@ -58,6 +58,8 @@ MUTUAL_SAMPLES = 1  # 0 = Examine all possible samples for each method, 1 = Exam
 
 precise = 5  # Final output precise
 
+dim = 3  # Dimension of PCC
+
 if OUTPUT:
     makeout()
     output.makeout()
@@ -263,11 +265,9 @@ Mix = Mixture(R_sub)
 
 
 Dis1 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
-Dis2 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
-Dis3 = np.array([0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.35, 0.45, 0.5, 0.75, 1])
+Dis2 = Dis1
+Dis3 = Dis1
 pr = len(Dis1)
-
-dim = 3
 
 R_Lookup = []
 XYZ_Lookup = []
@@ -364,8 +364,8 @@ print(Dis1)
 
 
 Dis1 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
-Dis2 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
-Dis3 = np.array([0, 0.025, 0.125, 0.3, 0.6, 0.7])
+Dis2 = Dis1
+Dis3 = Dis1
 pr = len(Dis1)
 
 R_Samples = []
