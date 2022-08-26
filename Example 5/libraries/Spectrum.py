@@ -1,6 +1,9 @@
 import numpy as np
 from scipy.spatial import Delaunay
 from . import MyMath as mm
+from pyhull.delaunay import DelaunayTri
+from scipy.interpolate import NearestNDInterpolator
+from scipy.interpolate import LinearNDInterpolator
 
 
 def find_KOVERS(r):
@@ -140,6 +143,11 @@ class Observation:
             - object.f(object.getZ() / object.light.getZ())
         )
 
+    def getAB(object):
+        A = object.getA()
+        B = object.getB()
+        return [A, B]
+
     def f(obj, t):
         sigma = 6 / 29
         if t > pow(sigma, 3):
@@ -208,6 +216,94 @@ class Mixture:
 
 
 class MyDelaunay:
+    def __init__(obj, points, source):
+        obj.Delaunay = LinearNDInterpolator(points, source, -1)
+        obj.Nearest = NearestNDInterpolator(points, source, -1)
+
+    def getInterpolation(obj, target, SP_Compare):
+        result = obj.Delaunay(target)
+        if result[0][0] == -1:
+            raise Exception("out of gamut")
+        return result
+
+    def getBestInterpolation(obj, target, SP_Compare):
+        result1 = obj.Delaunay(target)
+        if result1[0][0] == -1:
+            raise Exception("out of gamut")
+        result2 = obj.Nearest(target)
+        if SP_Compare.RMS(result2) <= SP_Compare.RMS(result1):
+            return result2
+        return result1
+
+    def getNearest(obj, target, SP_Compare):
+        result = obj.Nearest(target)
+        if result[0][0] == -1:
+            raise Exception("out of gamut")
+        return result
+
+
+class BestDelaunay:
+    def __init__(obj, points, sources):
+        obj.Delaunay = []
+        for i in range(len(points)):
+            obj.Delaunay.append(MyDelaunay(points[i], sources[i]))
+
+    def getBestInterpolation(obj, target, SP_Compare):
+        best = []
+        best_RMS = 100
+        for i in range(len(obj.Delaunay)):
+            try:
+                result = obj.Delaunay[i].getBestInterpolation(target, SP_Compare)
+                if best_RMS > SP_Compare.RMS(result):
+                    best_RMS = SP_Compare.RMS(result)
+                    best = result
+            except Exception as e:
+                continue
+        if best_RMS == 100:
+            raise Exception("out of gamut")
+        return best
+
+    def getInterpolation(obj, target, SP_Compare):
+        best = []
+        best_RMS = 100
+        for i in range(len(obj.Delaunay)):
+            try:
+                result = obj.Delaunay[i].getInterpolation(target, SP_Compare)
+                if best_RMS > SP_Compare.RMS(result):
+                    best_RMS = SP_Compare.RMS(result)
+                    best = result
+            except Exception as e:
+                continue
+        if best_RMS == 100:
+            raise Exception("out of gamut")
+        return best
+
+
+class SpecialCompare:
+    def __init__(obj, blue, red, yellow, Mix):
+        obj.blue_KOVERS = blue
+        obj.red_KOVERS = red
+        obj.yellow_KOVERS = yellow
+        obj.Mix = Mix
+        obj.mat1 = []
+
+    def setR1(obj, R1):
+        obj.mat1 = mm.D1(R1)
+
+    def RMS(obj, arr):
+        obj.Mix.clear()
+        obj.Mix.add(arr[0][0], obj.blue_KOVERS)
+        obj.Mix.add(arr[0][1], obj.red_KOVERS)
+        obj.Mix.add(arr[0][2], obj.yellow_KOVERS)
+        obj.mat2 = mm.D1(obj.Mix.getR())
+        result = np.subtract(obj.mat1, obj.mat2)
+        result = np.power(result, 2)
+        result = np.sum(result)
+        result = np.power(result, 0.5)
+        return result
+
+
+class MyDelaunay2:
     def __init__(obj, points, opt=""):
         obj.points = points
         obj.tri = Delaunay(
@@ -217,8 +313,9 @@ class MyDelaunay:
     def possible(obj, point):
         eps = np.finfo(float).eps
         # 0.009
-        obj.s = obj.tri.find_simplex(point, bruteforce=False)
+        obj.s = obj.tri.find_simplex(point, bruteforce=False, tol=0)
         if obj.s == -1:
+            # return True
             raise Exception("Out of gamut")
             return False
         else:
@@ -229,12 +326,28 @@ class MyDelaunay:
         temp_point = obj.points[obj.tri.simplices][obj.s]
         return temp_point
 
-    def getSource(obj, munsell_R):
-        RR = np.array(munsell_R)
+    def getSource(obj, points):
+        RR = np.array(points)
         return RR[obj.tri.simplices][obj.s]
 
-    def getResult(obj, target, source):
+    def getDetail(obj, point, points):
+        s = obj.tri.find_simplex(point, bruteforce=False)
+        RR = np.array(points)
+        return RR[obj.tri.simplices][s]
 
+    def getVariables(obj, target):
+        A = obj.locate(target).T
+        one = mm.array_repeat(1, len(target) + 1)
+        A = np.vstack((A, one))
+
+        B = np.hstack((target, [1]))
+        B = np.array([B]).T
+
+        Variables = mm.inv(A).dot(B)
+
+        return Variables
+
+    def getResult(obj, target, source):
         A = obj.locate(target).T
         one = mm.array_repeat(1, len(target) + 1)
         A = np.vstack((A, one))
@@ -244,7 +357,14 @@ class MyDelaunay:
 
         Variables = mm.inv(A).dot(B)
         result = Variables.T.dot(obj.getSource(source))
+        # print("R1", result)
+        # Another way
 
+        # why = LinearNDInterpolator(obj.tri, source)
+        # why = NearestNDInterpolator(obj.tri, source)
+        # result = why(target)
+
+        # print("R2", result)
         return result
 
 

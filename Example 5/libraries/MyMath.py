@@ -56,6 +56,7 @@ def array_zebra(arr):
 
 def PC(arr, k, vector, R_mean):
     start = 0
+    arr = D1(arr)
     arr = sum([arr, -1 * R_mean.T[0]])
     return dot([arr, vector[start : start + k].T])
 
